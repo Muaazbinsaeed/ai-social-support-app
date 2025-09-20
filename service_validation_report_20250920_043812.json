@@ -1,0 +1,30 @@
+{
+  "timestamp": "2025-09-20T04:38:12.681609",
+  "services": {
+    "fastapi": {
+      "name": "FastAPI Application",
+      "status": "error",
+      "details": {},
+      "errors": [
+        "Import error: No module named 'fastapi'"
+      ]
+    }
+  },
+  "integration_tests": {
+    "user_workflow": {
+      "name": "Complete User Workflow",
+      "status": "error",
+      "steps": [],
+      "errors": [
+        "No module named 'fastapi'"
+      ]
+    }
+  },
+  "summary": {
+    "total_services": 0,
+    "healthy_services": 0,
+    "failed_services": 0,
+    "integration_tests_passed": 0,
+    "integration_tests_failed": 0
+  }
+}

@@ -1,0 +1,61 @@
+# Social Security AI Workflow Automation System
+# Python Dependencies
+
+# Web Framework & API
+fastapi==0.104.1
+uvicorn==0.24.0
+pydantic==2.5.0
+python-multipart==0.0.6
+
+# Frontend & UI
+streamlit==1.38.0
+plotly==5.17.0
+
+# Background Processing
+celery==5.3.4
+redis==5.0.1
+
+# Database & ORM
+sqlalchemy==2.0.23
+alembic==1.13.0
+psycopg2-binary==2.9.9
+
+# AI/ML & Document Processing
+ollama==0.1.7
+qdrant-client==1.6.4
+easyocr==1.7.0
+transformers==4.35.0
+torch==2.1.0
+
+# Workflow & State Management
+langgraph==0.0.40
+langchain==0.1.0
+
+# File Processing
+PyMuPDF==1.23.8
+Pillow==10.1.0
+
+# Authentication & Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-dotenv==1.0.0
+pydantic-settings==2.2.1
+email-validator==2.1.0
+
+# Utilities & Logging
+structlog==23.2.0
+httpx>=0.25.2,<0.26.0
+
+# Computer Vision and Image Processing
+opencv-python==4.8.1.78
+numpy==1.24.3
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-mock==3.12.0
+locust==2.17.0
+
+# Development
+black==23.11.0
+isort==5.12.0

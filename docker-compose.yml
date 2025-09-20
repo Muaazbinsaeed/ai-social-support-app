@@ -1,0 +1,163 @@
+# Docker Compose file for Social Security AI System
+
+services:
+  # Main FastAPI Application
+  fastapi-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql://admin:postgres123@postgres:5432/social_security_ai
+      - REDIS_URL=redis://redis:6379
+      - OLLAMA_URL=http://ollama:11434
+      - QDRANT_URL=http://qdrant:6333
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+      - .:/app
+    networks:
+      - social-security-net
+    depends_on:
+      - postgres
+      - redis
+      - qdrant
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Background Workers
+  celery-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["celery", "-A", "app.workers.celery_app", "worker", "--loglevel=info", "--concurrency=2"]
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql://admin:postgres123@postgres:5432/social_security_ai
+      - REDIS_URL=redis://redis:6379
+      - OLLAMA_URL=http://ollama:11434
+      - QDRANT_URL=http://qdrant:6333
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+      - .:/app
+    networks:
+      - social-security-net
+    depends_on:
+      - postgres
+      - redis
+      - fastapi-app
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+    restart: unless-stopped
+
+  # Frontend Dashboard
+  streamlit-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["streamlit", "run", "frontend/dashboard_app.py", "--server.port=8005", "--server.address=0.0.0.0", "--server.headless=true"]
+    ports:
+      - "8005:8005"
+    environment:
+      - API_BASE_URL=http://fastapi-app:8000
+      - STREAMLIT_SERVER_HEADLESS=true
+    volumes:
+      - .:/app
+    networks:
+      - social-security-net
+    depends_on:
+      - fastapi-app
+    restart: unless-stopped
+
+  # AI Model Server
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    networks:
+      - social-security-net
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+        reservations:
+          memory: 4G
+    restart: unless-stopped
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=social_security_ai
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=postgres123
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --locale=C
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - social-security-net
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+    restart: unless-stopped
+
+  # Redis Cache & Message Broker
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - social-security-net
+    restart: unless-stopped
+
+  # Qdrant Vector Database
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - social-security-net
+    restart: unless-stopped
+
+networks:
+  social-security-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  qdrant_data:
+  ollama_models:
