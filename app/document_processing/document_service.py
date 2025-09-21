@@ -13,6 +13,7 @@ from app.document_processing.document_schemas import (
     DocumentUpload, DocumentAnalysisResult, DocumentProcessingStatus
 )
 from app.document_processing.ocr_service import OCRService
+from app.document_processing.multimodal_service import MultimodalService
 from app.shared.llm_client import OllamaClient
 from app.shared.file_utils import FileManager
 from app.shared.exceptions import (
@@ -28,6 +29,7 @@ class DocumentService:
 
     def __init__(self):
         self.ocr_service = OCRService()
+        self.multimodal_service = MultimodalService()
         self.llm_client = OllamaClient()
 
     def create_document_record(self, db: Session, application_id: str, user_id: str,
@@ -213,20 +215,22 @@ class DocumentService:
 
             start_time = time.time()
 
-            # Perform AI analysis
-            analysis_result = self.llm_client.analyze_document_multimodal(
-                document.extracted_text,
-                document.document_type
+            # Perform AI analysis using multimodal service
+            analysis_result = self.multimodal_service.analyze_document(
+                text_content=document.extracted_text,
+                document_type=document.document_type,
+                file_path=document.file_path
             )
 
             processing_time = int((time.time() - start_time) * 1000)
 
             # Save analysis results
-            document.structured_data = analysis_result
+            extracted_data = analysis_result.get('extracted_data', {})
+            document.structured_data = extracted_data
             document.analysis_processing_time_ms = processing_time
 
             # Log successful analysis
-            confidence = analysis_result.get("confidence", 0.5)
+            confidence = extracted_data.get("confidence_score", 0.5)
             self.log_processing_step(
                 db, document_id, "multimodal_analysis", "completed",
                 step_result=analysis_result,

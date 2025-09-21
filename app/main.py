@@ -26,6 +26,7 @@ from app.api.decision_router import router as decision_router
 from app.api.chatbot_router import router as chatbot_router
 from app.api.user_router import router as user_router
 from app.api.document_management_router import router as document_management_router
+from app.api.workflow_steps_router import router as workflow_steps_router
 
 # Setup logging
 setup_logging()
@@ -245,6 +246,7 @@ app.include_router(decision_router)
 app.include_router(chatbot_router)
 app.include_router(user_router)
 app.include_router(document_management_router)
+app.include_router(workflow_steps_router)
 
 
 # Root endpoint

@@ -1,0 +1,188 @@
+{
+  "timestamp": 1758348151.521423,
+  "total_tests": 22,
+  "successful_tests": 4,
+  "success_rate": 18.181818181818183,
+  "results": {
+    "document_management": [
+      {
+        "endpoint": "/document-management/types/supported",
+        "method": "GET",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "error": null
+      },
+      {
+        "endpoint": "/document-management/types/supported",
+        "method": "GET",
+        "status_code": 0,
+        "expected_status": 200,
+        "success": false,
+        "error": "assert 'supported_types' in {'document_types': ['bank_statement', 'emirates_id', 'salary_certificate', 'passport', 'visa', 'employment_contract', ...], 'processing_capabilities': ['OCR text extraction', 'Multimodal AI analysis', 'Structured data extraction', 'Document classification', 'Quality validation'], 'supported_formats': {'documents': ['.pdf', '.txt', '.doc', '.docx'], 'images': ['.png', '.jpg', '.jpeg', '.tiff', '.bmp'], 'max_file_size_bytes': 52428800, 'max_file_size_mb': 50}}"
+      },
+      {
+        "endpoint": "/document-management/upload",
+        "method": "POST",
+        "status_code": 500,
+        "expected_status": 201,
+        "success": false,
+        "error": null
+      },
+      {
+        "endpoint": "/document-management/",
+        "method": "GET",
+        "status_code": 0,
+        "expected_status": 200,
+        "success": false,
+        "error": ""
+      },
+      {
+        "endpoint": "/document-management/test-doc-id",
+        "method": "GET",
+        "status_code": 500,
+        "expected_status": 200,
+        "success": false,
+        "error": null
+      },
+      {
+        "endpoint": "/document-management/test-doc-id",
+        "method": "GET",
+        "status_code": 0,
+        "expected_status": 200,
+        "success": false,
+        "error": "assert 500 in [200, 404]\n +  where 500 = <Response [500 Internal Server Error]>.status_code"
+      },
+      {
+        "endpoint": "/document-management/test-doc-id",
+        "method": "PUT",
+        "status_code": 500,
+        "expected_status": 200,
+        "success": false,
+        "error": null
+      },
+      {
+        "endpoint": "/document-management/test-doc-id",
+        "method": "PUT",
+        "status_code": 0,
+        "expected_status": 200,
+        "success": false,
+        "error": "assert 500 in [200, 404]\n +  where 500 = <Response [500 Internal Server Error]>.status_code"
+      },
+      {
+        "endpoint": "/document-management/test-doc-id/processing-logs",
+        "method": "GET",
+        "status_code": 500,
+        "expected_status": 200,
+        "success": false,
+        "error": null
+      },
+      {
+        "endpoint": "/document-management/test-doc-id/processing-logs",
+        "method": "GET",
+        "status_code": 0,
+        "expected_status": 200,
+        "success": false,
+        "error": "assert 500 in [200, 404]\n +  where 500 = <Response [500 Internal Server Error]>.status_code"
+      },
+      {
+        "endpoint": "/document-management/test-doc-id/download",
+        "method": "GET",
+        "status_code": 500,
+        "expected_status": 200,
+        "success": false,
+        "error": null
+      },
+      {
+        "endpoint": "/document-management/test-doc-id/download",
+        "method": "GET",
+        "status_code": 0,
+        "expected_status": 200,
+        "success": false,
+        "error": "assert 500 in [200, 404]\n +  where 500 = <Response [500 Internal Server Error]>.status_code"
+      },
+      {
+        "endpoint": "/document-management/test-doc-id",
+        "method": "DELETE",
+        "status_code": 500,
+        "expected_status": 200,
+        "success": false,
+        "error": null
+      },
+      {
+        "endpoint": "/document-management/test-doc-id",
+        "method": "DELETE",
+        "status_code": 0,
+        "expected_status": 200,
+        "success": false,
+        "error": "assert 500 in [200, 404]\n +  where 500 = <Response [500 Internal Server Error]>.status_code"
+      }
+    ],
+    "user_management": [
+      {
+        "endpoint": "/users/profile",
+        "method": "GET",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "error": null
+      },
+      {
+        "endpoint": "/users/profile",
+        "method": "PUT",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "error": null
+      },
+      {
+        "endpoint": "/users/change-password",
+        "method": "POST",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "error": null
+      },
+      {
+        "endpoint": "/users/",
+        "method": "GET",
+        "status_code": 403,
+        "expected_status": 200,
+        "success": false,
+        "error": null
+      },
+      {
+        "endpoint": "/users/4a8fead1-2424-4844-b7fe-ee482af676fa",
+        "method": "GET",
+        "status_code": 403,
+        "expected_status": 200,
+        "success": false,
+        "error": null
+      },
+      {
+        "endpoint": "/users/4a8fead1-2424-4844-b7fe-ee482af676fa/activation",
+        "method": "PUT",
+        "status_code": 403,
+        "expected_status": 200,
+        "success": false,
+        "error": null
+      },
+      {
+        "endpoint": "/users/stats/overview",
+        "method": "GET",
+        "status_code": 403,
+        "expected_status": 200,
+        "success": false,
+        "error": null
+      },
+      {
+        "endpoint": "/users/account",
+        "method": "DELETE",
+        "status_code": 0,
+        "expected_status": 200,
+        "success": false,
+        "error": "AsyncClient.delete() got an unexpected keyword argument 'json'"
+      }
+    ]
+  }
+}

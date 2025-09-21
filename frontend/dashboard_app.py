@@ -4,14 +4,25 @@ Main Streamlit dashboard application
 
 import streamlit as st
 import os
+import sys
+
+# Add the project root to Python path
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 from frontend.utils.dashboard_state import (
     initialize_session_state, is_authenticated, get_error_message,
     get_success_message, clear_messages
 )
 from frontend.utils.api_client import api_client
+from frontend.utils.auth_cookies import initialize_auth_from_cookies, save_session_to_cookies
 from frontend.components.auth_component import show_authentication, show_user_header
+from frontend.components.navigation import show_navigation
 from frontend.components.application_panel import show_application_panel
-from frontend.components.document_panel import show_document_panel
+from frontend.components.document_management import show_enhanced_document_panel
+from frontend.components.processing_status import show_processing_status
+from frontend.components.workflow_steps_control import show_workflow_steps_control
 from frontend.components.status_panel import show_status_panel
 from frontend.components.results_panel import show_results_panel
 
@@ -127,8 +138,16 @@ def show_system_status():
                         status = service_info.get('status', 'unknown')
                         if status == 'healthy':
                             st.markdown(f"✅ {service_name.title()}")
-                        else:
+                        elif status == 'degraded':
+                            st.markdown(f"⚠️ {service_name.title()}")
+                        elif status == 'warning':
+                            st.markdown(f"⚠️ {service_name.title()}")
+                        elif status == 'unavailable':
+                            st.markdown(f"⭕ {service_name.title()} (Optional)")
+                        elif status == 'unhealthy':
                             st.markdown(f"❌ {service_name.title()}")
+                        else:
+                            st.markdown(f"❓ {service_name.title()}")
 
         # Show API connection info
         st.markdown("---")
@@ -174,6 +193,11 @@ def show_dashboard():
 
     st.markdown("---")
 
+    # Show navigation with My Applications
+    show_navigation()
+
+    st.markdown("---")
+
     # Check if we have results to show
     application_results = st.session_state.get('application_results')
 
@@ -192,14 +216,24 @@ def show_dashboard():
             show_application_panel()
 
     with col2:
-        # Center Panel: Document Upload
+        # Center Panel: Enhanced Document Management
         with st.container():
-            show_document_panel()
+            show_enhanced_document_panel()
 
     with col3:
-        # Right Panel: Processing Status
+        # Right Panel: Processing Status with OCR Results
         with st.container():
-            show_status_panel()
+            # Add tabs for different views
+            tab1, tab2, tab3 = st.tabs(["🎛️ Manual Control", "📊 Processing Status", "📈 Summary"])
+            
+            with tab1:
+                show_workflow_steps_control()
+            
+            with tab2:
+                show_processing_status()
+            
+            with tab3:
+                show_status_panel()
 
     # Show footer
     show_footer()
@@ -237,6 +271,10 @@ def main():
     # Initialize session state
     initialize_session_state()
 
+    # Try to restore authentication from cookies
+    if not is_authenticated():
+        initialize_auth_from_cookies()
+
     # Show main header
     show_main_header()
 
@@ -253,6 +291,9 @@ def main():
     else:
         # Show main dashboard
         show_dashboard()
+        
+        # Save session state to cookies for persistence
+        save_session_to_cookies()
 
     # Clear messages at the end of each run
     clear_messages()

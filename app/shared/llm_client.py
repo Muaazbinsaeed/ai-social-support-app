@@ -207,7 +207,9 @@ Make an eligibility decision and provide reasoning. Return as JSON format."""
     def _get_fallback_response(self, prompt: str, model_name: str) -> str:
         """Get fallback response when model is unavailable"""
         if "multimodal" in model_name or "moondream" in model_name:
-            return '{"extracted_data": "fallback", "confidence": 0.5, "status": "mock_response"}'
+            # For multimodal analysis, we want to trigger the intelligent extraction
+            # Return an invalid JSON to force the fallback to text extraction
+            return "Model unavailable - triggering intelligent text extraction"
         elif "decision" in model_name or "qwen" in model_name:
             return '{"decision": "needs_review", "confidence": 0.6, "reasoning": "System unavailable - manual review required"}'
         else:

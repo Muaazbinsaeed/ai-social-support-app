@@ -1,0 +1,730 @@
+{
+  "total_tests": 59,
+  "passed": 42,
+  "failed": 17,
+  "errors": [
+    {
+      "test": "GET /documents/status/{document_id}",
+      "details": {
+        "status_code": 200,
+        "data": {
+          "document_id": "85091030-e546-419d-8089-b5b9716c764e",
+          "status": "processing",
+          "stage": "ocr_extraction",
+          "progress": 45,
+          "created_at": "2025-09-20T01:20:00Z",
+          "updated_at": "2025-09-20T19:01:01.294154Z",
+          "processing_steps": [
+            {
+              "step": "upload",
+              "status": "completed",
+              "timestamp": "2025-09-20T01:20:00Z"
+            },
+            {
+              "step": "validation",
+              "status": "completed",
+              "timestamp": "2025-09-20T01:20:01Z"
+            },
+            {
+              "step": "ocr_extraction",
+              "status": "in_progress",
+              "timestamp": "2025-09-20T01:20:02Z"
+            },
+            {
+              "step": "ai_analysis",
+              "status": "pending",
+              "timestamp": null
+            },
+            {
+              "step": "data_extraction",
+              "status": "pending",
+              "timestamp": null
+            }
+          ],
+          "user_id": "5eaa6800-ed9f-4240-934b-04304ad4c929"
+        },
+        "headers": {
+          "Date": "Sat, 20 Sep 2025 19:01:01 GMT",
+          "Server": "uvicorn",
+          "Content-Length": "622",
+          "Content-Type": "application/json",
+          "x-request-id": "ac5ac472-9e6c-4277-bcb4-4fef3640e128"
+        },
+        "success": true
+      }
+    },
+    {
+      "test": "DELETE /documents/{document_id}",
+      "details": {
+        "status_code": 200,
+        "data": {
+          "message": "Document deleted successfully",
+          "document_id": "85091030-e546-419d-8089-b5b9716c764e",
+          "deleted_at": "2025-09-20T19:01:01.305332Z",
+          "user_id": "5eaa6800-ed9f-4240-934b-04304ad4c929"
+        },
+        "headers": {
+          "Date": "Sat, 20 Sep 2025 19:01:01 GMT",
+          "Server": "uvicorn",
+          "Content-Length": "188",
+          "Content-Type": "application/json",
+          "x-request-id": "4d4eef92-4708-42d4-90b6-60b6475acf24"
+        },
+        "success": true
+      }
+    },
+    {
+      "test": "PUT /applications/{application_id}",
+      "details": {
+        "status_code": 400,
+        "data": {
+          "detail": {
+            "error": "APPLICATION_NOT_EDITABLE",
+            "message": "Application cannot be updated after submission",
+            "current_status": "scanning_documents"
+          }
+        },
+        "headers": {
+          "Date": "Sat, 20 Sep 2025 19:01:01 GMT",
+          "Server": "uvicorn",
+          "Content-Length": "144",
+          "Content-Type": "application/json",
+          "x-request-id": "43bf89f2-0607-47f0-9a1b-cef292f40aae"
+        },
+        "success": false
+      }
+    },
+    {
+      "test": "POST /analysis/documents/{document_id}",
+      "details": {
+        "status_code": 422,
+        "data": {
+          "error": "VALIDATION_ERROR",
+          "message": "Request validation failed",
+          "details": [
+            {
+              "type": "missing",
+              "loc": [
+                "body",
+                "document_id"
+              ],
+              "msg": "Field required",
+              "input": "{'analysis_type': 'full'}"
+            }
+          ],
+          "request_id": "0fdb121c-e42c-46dd-ba11-88d5b233298e"
+        },
+        "headers": {
+          "Date": "Sat, 20 Sep 2025 19:01:01 GMT",
+          "Server": "uvicorn",
+          "Content-Length": "237",
+          "Content-Type": "application/json",
+          "x-request-id": "0fdb121c-e42c-46dd-ba11-88d5b233298e"
+        },
+        "success": false
+      }
+    },
+    {
+      "test": "POST /analysis/bulk",
+      "details": {
+        "status_code": 200,
+        "data": {
+          "batch_id": "batch_1758380461",
+          "total_documents": 1,
+          "processed": 0,
+          "failed": 1,
+          "results": [
+            {
+              "analysis_id": "failed_e318b33f-7db8-4186-b44c-42c4b0165a07_1758380461",
+              "document_id": "e318b33f-7db8-4186-b44c-42c4b0165a07",
+              "status": "failed",
+              "results": null,
+              "processing_time_ms": null,
+              "created_at": "2025-09-20T19:01:01.802793Z"
+            }
+          ]
+        },
+        "headers": {
+          "Date": "Sat, 20 Sep 2025 19:01:01 GMT",
+          "Server": "uvicorn",
+          "Content-Length": "316",
+          "Content-Type": "application/json",
+          "x-request-id": "7350220d-2b59-4837-98c5-de0ad50719ba"
+        },
+        "success": true
+      }
+    },
+    {
+      "test": "POST /ocr/documents/{document_id}",
+      "details": {
+        "status_code": 422,
+        "data": {
+          "error": "VALIDATION_ERROR",
+          "message": "Request validation failed",
+          "details": [
+            {
+              "type": "missing",
+              "loc": [
+                "body"
+              ],
+              "msg": "Field required",
+              "input": null
+            }
+          ],
+          "request_id": "7e723edb-ae58-4b33-8943-0f7baf5f5d40"
+        },
+        "headers": {
+          "Date": "Sat, 20 Sep 2025 19:01:01 GMT",
+          "Server": "uvicorn",
+          "Content-Length": "200",
+          "Content-Type": "application/json",
+          "x-request-id": "7e723edb-ae58-4b33-8943-0f7baf5f5d40"
+        },
+        "success": false
+      }
+    },
+    {
+      "test": "POST /ocr/batch",
+      "details": {
+        "status_code": 200,
+        "data": {
+          "batch_id": "batch_ocr_1758380461",
+          "total_documents": 1,
+          "processed": 0,
+          "failed": 1,
+          "results": [
+            {
+              "ocr_id": "failed_9e77fc51-dfce-495c-8819-385d57e20cfd_1758380461",
+              "document_id": "9e77fc51-dfce-495c-8819-385d57e20cfd",
+              "status": "failed",
+              "results": null,
+              "total_pages": 0,
+              "processing_time_ms": 0,
+              "created_at": "2025-09-20T19:01:01.844284Z"
+            }
+          ]
+        },
+        "headers": {
+          "Date": "Sat, 20 Sep 2025 19:01:01 GMT",
+          "Server": "uvicorn",
+          "Content-Length": "328",
+          "Content-Type": "application/json",
+          "x-request-id": "29f3da6a-9e9b-4089-a76d-3ae3da8651af"
+        },
+        "success": true
+      }
+    },
+    {
+      "test": "POST /ocr/direct",
+      "details": {
+        "status_code": 422,
+        "data": {
+          "error": "VALIDATION_ERROR",
+          "message": "Request validation failed",
+          "details": [
+            {
+              "type": "missing",
+              "loc": [
+                "body",
+                "image_data"
+              ],
+              "msg": "Field required",
+              "input": "{'image_base64': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==', 'language_hints': ['en']}"
+            }
+          ],
+          "request_id": "e01321ad-5c69-4276-9c9e-77a1f67784f7"
+        },
+        "headers": {
+          "Date": "Sat, 20 Sep 2025 19:01:01 GMT",
+          "Server": "uvicorn",
+          "Content-Length": "375",
+          "Content-Type": "application/json",
+          "x-request-id": "e01321ad-5c69-4276-9c9e-77a1f67784f7"
+        },
+        "success": false
+      }
+    },
+    {
+      "test": "POST /decisions/batch",
+      "details": {
+        "status_code": 200,
+        "data": {
+          "batch_id": "batch_decision_1758380461",
+          "total_applications": 1,
+          "processed": 0,
+          "failed": 1,
+          "results": []
+        },
+        "headers": {
+          "Date": "Sat, 20 Sep 2025 19:01:01 GMT",
+          "Server": "uvicorn",
+          "Content-Length": "101",
+          "Content-Type": "application/json",
+          "x-request-id": "5a483fd5-5a82-4aa3-9186-045fdc32b184"
+        },
+        "success": true
+      }
+    },
+    {
+      "test": "POST /decisions/explain/{decision_id}",
+      "details": {
+        "status_code": 422,
+        "data": {
+          "error": "VALIDATION_ERROR",
+          "message": "Request validation failed",
+          "details": [
+            {
+              "type": "missing",
+              "loc": [
+                "body"
+              ],
+              "msg": "Field required",
+              "input": null
+            }
+          ],
+          "request_id": "adadc9c0-b6dd-4584-91e4-cd8c83ee07da"
+        },
+        "headers": {
+          "Date": "Sat, 20 Sep 2025 19:01:01 GMT",
+          "Server": "uvicorn",
+          "Content-Length": "200",
+          "Content-Type": "application/json",
+          "x-request-id": "adadc9c0-b6dd-4584-91e4-cd8c83ee07da"
+        },
+        "success": false
+      }
+    },
+    {
+      "test": "POST /users/change-password",
+      "details": {
+        "status_code": 422,
+        "data": {
+          "error": "VALIDATION_ERROR",
+          "message": "Request validation failed",
+          "details": [
+            {
+              "type": "missing",
+              "loc": [
+                "body",
+                "confirm_password"
+              ],
+              "msg": "Field required",
+              "input": "{'current_password': 'NewPassword123!', 'new_password': 'AnotherPassword123!'}"
+            }
+          ],
+          "request_id": "167ebefa-bcea-4912-823c-9c65d19345b1"
+        },
+        "headers": {
+          "Date": "Sat, 20 Sep 2025 19:01:01 GMT",
+          "Server": "uvicorn",
+          "Content-Length": "295",
+          "Content-Type": "application/json",
+          "x-request-id": "167ebefa-bcea-4912-823c-9c65d19345b1"
+        },
+        "success": false
+      }
+    },
+    {
+      "test": "GET /document-management/",
+      "details": {
+        "status_code": 403,
+        "data": {
+          "detail": "Inactive user"
+        },
+        "headers": {
+          "Date": "Sat, 20 Sep 2025 19:01:01 GMT",
+          "Server": "uvicorn",
+          "Content-Length": "26",
+          "Content-Type": "application/json",
+          "x-request-id": "b3e6247f-ecef-46f9-b738-87d2ace10f53"
+        },
+        "success": false
+      }
+    },
+    {
+      "test": "GET /document-management/{document_id}",
+      "details": {
+        "status_code": 403,
+        "data": {
+          "detail": "Inactive user"
+        },
+        "headers": {
+          "Date": "Sat, 20 Sep 2025 19:01:01 GMT",
+          "Server": "uvicorn",
+          "Content-Length": "26",
+          "Content-Type": "application/json",
+          "x-request-id": "31260f22-5e96-4d27-9b40-3155b6af6125"
+        },
+        "success": false
+      }
+    },
+    {
+      "test": "PUT /document-management/{document_id}",
+      "details": {
+        "status_code": 403,
+        "data": {
+          "detail": "Inactive user"
+        },
+        "headers": {
+          "Date": "Sat, 20 Sep 2025 19:01:01 GMT",
+          "Server": "uvicorn",
+          "Content-Length": "26",
+          "Content-Type": "application/json",
+          "x-request-id": "2baaed78-9d73-4cdf-9b1a-1affa6a3fcf4"
+        },
+        "success": false
+      }
+    },
+    {
+      "test": "GET /document-management/{document_id}/download",
+      "details": {
+        "status_code": 403,
+        "data": {
+          "detail": "Inactive user"
+        },
+        "headers": {
+          "Date": "Sat, 20 Sep 2025 19:01:01 GMT",
+          "Server": "uvicorn",
+          "Content-Length": "26",
+          "Content-Type": "application/json",
+          "x-request-id": "0a895515-e7bb-4a75-b7f1-ba5d80195f65"
+        },
+        "success": false
+      }
+    },
+    {
+      "test": "GET /document-management/{document_id}/processing-logs",
+      "details": {
+        "status_code": 403,
+        "data": {
+          "detail": "Inactive user"
+        },
+        "headers": {
+          "Date": "Sat, 20 Sep 2025 19:01:01 GMT",
+          "Server": "uvicorn",
+          "Content-Length": "26",
+          "Content-Type": "application/json",
+          "x-request-id": "d9bbeea1-5fbf-4e6d-9fc1-9bf65c769ddb"
+        },
+        "success": false
+      }
+    },
+    {
+      "test": "DELETE /document-management/{document_id}",
+      "details": {
+        "status_code": 403,
+        "data": {
+          "detail": "Inactive user"
+        },
+        "headers": {
+          "Date": "Sat, 20 Sep 2025 19:01:01 GMT",
+          "Server": "uvicorn",
+          "Content-Length": "26",
+          "Content-Type": "application/json",
+          "x-request-id": "c7f7dabc-7857-427c-b230-dde5422a3db6"
+        },
+        "success": false
+      }
+    }
+  ],
+  "endpoint_coverage": {
+    "GET /": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:00:59.933509"
+    },
+    "GET /health/": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:00.067974"
+    },
+    "GET /health/basic": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:00.072014"
+    },
+    "GET /health/database": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:00.081166"
+    },
+    "POST /auth/register": {
+      "success": true,
+      "status_code": 201,
+      "timestamp": "2025-09-20T23:01:00.477431"
+    },
+    "POST /auth/login": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:00.744585"
+    },
+    "GET /auth/me": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:00.753016"
+    },
+    "GET /auth/status": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:00.759425"
+    },
+    "POST /auth/refresh": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:00.767773"
+    },
+    "PUT /auth/password": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:01.278609"
+    },
+    "POST /auth/logout": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:01.286319"
+    },
+    "GET /documents/types": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:01.288251"
+    },
+    "POST /documents/upload": {
+      "success": true,
+      "status_code": 400,
+      "timestamp": "2025-09-20T23:01:01.289643"
+    },
+    "GET /documents/status/{document_id}": {
+      "success": false,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:01.297302"
+    },
+    "DELETE /documents/{document_id}": {
+      "success": false,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:01.307776"
+    },
+    "POST /workflow/start-application": {
+      "success": true,
+      "status_code": 201,
+      "timestamp": "2025-09-20T23:01:01.358851"
+    },
+    "GET /workflow/status/{application_id}": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:01.387451"
+    },
+    "POST /workflow/process/{application_id}": {
+      "success": true,
+      "status_code": 202,
+      "timestamp": "2025-09-20T23:01:01.730244"
+    },
+    "GET /applications/": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:01.752570"
+    },
+    "GET /applications/{application_id}": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:01.761403"
+    },
+    "PUT /applications/{application_id}": {
+      "success": false,
+      "status_code": 400,
+      "timestamp": "2025-09-20T23:01:01.773739"
+    },
+    "GET /applications/{application_id}/results": {
+      "success": true,
+      "status_code": 202,
+      "timestamp": "2025-09-20T23:01:01.785711"
+    },
+    "POST /analysis/documents/{document_id}": {
+      "success": false,
+      "status_code": 422,
+      "timestamp": "2025-09-20T23:01:01.794671"
+    },
+    "POST /analysis/bulk": {
+      "success": false,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:01.810837"
+    },
+    "POST /analysis/query": {
+      "success": true,
+      "status_code": 400,
+      "timestamp": "2025-09-20T23:01:01.820833"
+    },
+    "POST /analysis/upload-and-analyze": {
+      "success": true,
+      "status_code": 400,
+      "timestamp": "2025-09-20T23:01:01.822796"
+    },
+    "GET /ocr/health": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:01.825737"
+    },
+    "POST /ocr/documents/{document_id}": {
+      "success": false,
+      "status_code": 422,
+      "timestamp": "2025-09-20T23:01:01.836317"
+    },
+    "POST /ocr/batch": {
+      "success": false,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:01.849637"
+    },
+    "POST /ocr/direct": {
+      "success": false,
+      "status_code": 422,
+      "timestamp": "2025-09-20T23:01:01.857688"
+    },
+    "POST /ocr/upload-and-extract": {
+      "success": true,
+      "status_code": 400,
+      "timestamp": "2025-09-20T23:01:01.860621"
+    },
+    "GET /decisions/health": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:01.862865"
+    },
+    "GET /decisions/criteria": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:01.866849"
+    },
+    "POST /decisions/make-decision": {
+      "success": true,
+      "status_code": 404,
+      "timestamp": "2025-09-20T23:01:01.878010"
+    },
+    "POST /decisions/batch": {
+      "success": false,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:01.889244"
+    },
+    "POST /decisions/explain/{decision_id}": {
+      "success": false,
+      "status_code": 422,
+      "timestamp": "2025-09-20T23:01:01.897262"
+    },
+    "GET /chatbot/health": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:01.901482"
+    },
+    "GET /chatbot/quick-help": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:01.903627"
+    },
+    "POST /chatbot/chat": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:01.916736"
+    },
+    "GET /chatbot/sessions": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:01.923373"
+    },
+    "GET /chatbot/sessions/{session_id}": {
+      "success": true,
+      "status_code": 404,
+      "timestamp": "2025-09-20T23:01:01.930538"
+    },
+    "DELETE /chatbot/sessions/{session_id}": {
+      "success": true,
+      "status_code": 404,
+      "timestamp": "2025-09-20T23:01:01.938212"
+    },
+    "WS /chatbot/ws/{session_id}": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:01.938230"
+    },
+    "GET /users/profile": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:01.944893"
+    },
+    "PUT /users/profile": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:01.962162"
+    },
+    "POST /users/change-password": {
+      "success": false,
+      "status_code": 422,
+      "timestamp": "2025-09-20T23:01:01.971690"
+    },
+    "DELETE /users/account": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:01.982214"
+    },
+    "GET /users/ (Admin)": {
+      "success": true,
+      "status_code": 403,
+      "timestamp": "2025-09-20T23:01:01.991621"
+    },
+    "GET /users/{user_id} (Admin)": {
+      "success": true,
+      "status_code": 403,
+      "timestamp": "2025-09-20T23:01:01.998372"
+    },
+    "PUT /users/{user_id}/activation (Admin)": {
+      "success": true,
+      "status_code": 403,
+      "timestamp": "2025-09-20T23:01:02.007672"
+    },
+    "GET /users/stats/overview (Admin)": {
+      "success": true,
+      "status_code": 403,
+      "timestamp": "2025-09-20T23:01:02.017997"
+    },
+    "GET /document-management/types/supported": {
+      "success": true,
+      "status_code": 200,
+      "timestamp": "2025-09-20T23:01:02.020009"
+    },
+    "GET /document-management/": {
+      "success": false,
+      "status_code": 403,
+      "timestamp": "2025-09-20T23:01:02.025484"
+    },
+    "POST /document-management/upload": {
+      "success": true,
+      "status_code": 400,
+      "timestamp": "2025-09-20T23:01:02.028435"
+    },
+    "GET /document-management/{document_id}": {
+      "success": false,
+      "status_code": 403,
+      "timestamp": "2025-09-20T23:01:02.036599"
+    },
+    "PUT /document-management/{document_id}": {
+      "success": false,
+      "status_code": 403,
+      "timestamp": "2025-09-20T23:01:02.043559"
+    },
+    "GET /document-management/{document_id}/download": {
+      "success": false,
+      "status_code": 403,
+      "timestamp": "2025-09-20T23:01:02.052392"
+    },
+    "GET /document-management/{document_id}/processing-logs": {
+      "success": false,
+      "status_code": 403,
+      "timestamp": "2025-09-20T23:01:02.057811"
+    },
+    "DELETE /document-management/{document_id}": {
+      "success": false,
+      "status_code": 403,
+      "timestamp": "2025-09-20T23:01:02.066606"
+    }
+  },
+  "start_time": "2025-09-20T23:00:59.919036",
+  "end_time": "2025-09-20T23:01:02.067202",
+  "duration": 3.0672121047973633
+}

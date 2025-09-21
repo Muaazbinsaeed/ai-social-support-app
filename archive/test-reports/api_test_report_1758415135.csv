@@ -1,0 +1,58 @@
+Module,Test,Status,Status_Code,Response_Time_ms,Method,URL,Error
+Auth,User Registration,PASS,201,376,POST,http://localhost:8000/auth/register,
+Auth,User Login,PASS,200,563,POST,http://localhost:8000/auth/login,
+Auth,Get Current User,PASS,200,23,GET,http://localhost:8000/auth/me,
+Auth,Refresh Token,PASS,200,47,POST,http://localhost:8000/auth/refresh,
+Auth,Auth Status,PASS,200,26,GET,http://localhost:8000/auth/status,
+Auth,Unauthorized Access (Expected Fail),PASS,403,492,GET,http://localhost:8000/auth/me,
+Auth,Change Password,FAIL,405,19,POST,http://localhost:8000/auth/password,{'detail': 'Method Not Allowed'}
+Auth,Change Password Alt,FAIL,422,23,POST,http://localhost:8000/users/change-password,"{'error': 'VALIDATION_ERROR', 'message': 'Request "
+Auth,Logout,PASS,200,27,POST,http://localhost:8000/auth/logout,
+Health,Root Endpoint,PASS,200,6,GET,http://localhost:8000/,
+Health,Basic Health Check,PASS,200,55,GET,http://localhost:8000/health/,
+Health,Basic Health Alternative,PASS,200,4,GET,http://localhost:8000/health/basic,
+Health,Database Health,PASS,200,7,GET,http://localhost:8000/health/database,
+Health,OpenAPI Spec,PASS,200,5,GET,http://localhost:8000/openapi.json,
+Workflow,Get Workflow Status,PASS,200,12,GET,http://localhost:8000/workflow/status/1902c4a3-c4e5-4890-b043-560e77c12ca8,
+Workflow,Upload Documents,PASS,202,80,POST,http://localhost:8000/workflow/upload-documents/1902c4a3-c4e5-4890-b043-560e77c12ca8,
+Workflow,Start Processing,PASS,202,63,POST,http://localhost:8000/workflow/process/1902c4a3-c4e5-4890-b043-560e77c12ca8,
+Workflow,Check Updated Status,PASS,200,19,GET,http://localhost:8000/workflow/status/1902c4a3-c4e5-4890-b043-560e77c12ca8,
+Documents,Get Document Types,PASS,200,8,GET,http://localhost:8000/documents/types,
+Documents,Get Supported Types,PASS,200,11,GET,http://localhost:8000/document-management/types/supported,
+Documents,List Documents,PASS,200,23,GET,http://localhost:8000/document-management/,
+Documents,Upload Document,PASS,201,40,POST,http://localhost:8000/document-management/upload,
+Documents,Get Document Details,FAIL,405,6,GET,http://localhost:8000/documents/75855b37-0359-4dd5-aa4c-fd0284885357,{'detail': 'Method Not Allowed'}
+Documents,Get Document Management Details,PASS,200,33,GET,http://localhost:8000/document-management/75855b37-0359-4dd5-aa4c-fd0284885357,
+Documents,Get Document Status,PASS,200,17,GET,http://localhost:8000/documents/status/75855b37-0359-4dd5-aa4c-fd0284885357,
+Documents,Get Processing Logs,PASS,200,35,GET,http://localhost:8000/document-management/75855b37-0359-4dd5-aa4c-fd0284885357/processing-logs,
+Documents,Download Document,PASS,200,40,GET,http://localhost:8000/document-management/75855b37-0359-4dd5-aa4c-fd0284885357/download,
+Ocr,OCR Health Check,PASS,200,7,GET,http://localhost:8000/ocr/health,
+Ocr,Direct OCR,FAIL,422,19,POST,http://localhost:8000/ocr/direct,"{'error': 'VALIDATION_ERROR', 'message': 'Request "
+Ocr,Upload and Extract,PASS,200,767,POST,http://localhost:8000/ocr/upload-and-extract,
+Ocr,OCR Document by ID,FAIL,422,34,POST,http://localhost:8000/ocr/documents/75855b37-0359-4dd5-aa4c-fd0284885357,"{'error': 'VALIDATION_ERROR', 'message': 'Request "
+Ocr,Batch OCR,PASS,200,80,POST,http://localhost:8000/ocr/batch,
+Analysis,Query Analysis,FAIL,400,25,POST,http://localhost:8000/analysis/query,"{'detail': {'error': 'IMAGE_REQUIRED', 'message': "
+Analysis,Upload and Analyze,FAIL,500,96,POST,http://localhost:8000/analysis/upload-and-analyze,"{'detail': {'error': 'UPLOAD_ANALYZE_FAILED', 'mes"
+Analysis,Document Analysis by ID,FAIL,422,21,POST,http://localhost:8000/analysis/documents/75855b37-0359-4dd5-aa4c-fd0284885357,"{'error': 'VALIDATION_ERROR', 'message': 'Request "
+Analysis,Bulk Analysis,PASS,200,47,POST,http://localhost:8000/analysis/bulk,
+Decisions,Decision Health Check,PASS,200,10,GET,http://localhost:8000/decisions/health,
+Decisions,Get Decision Criteria,PASS,200,10,GET,http://localhost:8000/decisions/criteria,
+Decisions,Make Decision,PASS,200,56,POST,http://localhost:8000/decisions/make-decision,
+Decisions,Batch Decisions,FAIL,422,17,POST,http://localhost:8000/decisions/batch,"{'error': 'VALIDATION_ERROR', 'message': 'Request "
+Decisions,Explain Decision,FAIL,405,10,GET,http://localhost:8000/decisions/explain/decision_1902c4a3-c4e5-4890-b043-560e77c12ca8_1758400734,{'detail': 'Method Not Allowed'}
+Users,Get All Users,FAIL,403,23,GET,http://localhost:8000/users/,{'detail': 'Admin access required'}
+Users,Get User Account,FAIL,403,17,GET,http://localhost:8000/users/account,{'detail': 'Admin access required'}
+Users,Get User Profile,PASS,200,17,GET,http://localhost:8000/users/profile,
+Users,Get User Stats,FAIL,403,20,GET,http://localhost:8000/users/stats/overview,{'detail': 'Admin access required'}
+Users,Get Specific User,FAIL,403,274,GET,http://localhost:8000/users/70aed35c-1555-4d00-b480-e1fdff33a890,{'detail': 'Admin access required'}
+Users,User Activation,FAIL,405,8,POST,http://localhost:8000/users/70aed35c-1555-4d00-b480-e1fdff33a890/activation,{'detail': 'Method Not Allowed'}
+Applications,Get All Applications,PASS,200,10,GET,http://localhost:8000/applications/,
+Applications,Create Application,PASS,201,43,POST,http://localhost:8000/workflow/start-application,
+Applications,Get Specific Application,PASS,200,25,GET,http://localhost:8000/applications/1902c4a3-c4e5-4890-b043-560e77c12ca8,
+Applications,Get Application Results,PASS,202,19,GET,http://localhost:8000/applications/1902c4a3-c4e5-4890-b043-560e77c12ca8/results,
+Chatbot,Chatbot Health Check,PASS,200,15,GET,http://localhost:8000/chatbot/health,
+Chatbot,Quick Help,PASS,200,10,GET,http://localhost:8000/chatbot/quick-help,
+Chatbot,Get Chat Sessions,PASS,200,29,GET,http://localhost:8000/chatbot/sessions,
+Chatbot,Start Chat,PASS,200,41,POST,http://localhost:8000/chatbot/chat,
+Chatbot,Continue Chat,PASS,200,23,POST,http://localhost:8000/chatbot/chat,
+Chatbot,Get Specific Session,PASS,200,27,GET,http://localhost:8000/chatbot/sessions/session_70aed35c-1555-4d00-b480-e1fdff33a890_1758400735,

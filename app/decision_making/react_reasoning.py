@@ -144,6 +144,7 @@ class ReActDecisionEngine:
         return ReasoningStep(
             step_type="thought",
             content=content,
+            confidence=0.8,  # Default confidence for reasoning steps
             timestamp=datetime.utcnow(),
             data_used=data_used
         )
@@ -153,6 +154,7 @@ class ReActDecisionEngine:
         return ReasoningStep(
             step_type="action",
             content=content,
+            confidence=0.9,  # Actions usually have higher confidence
             timestamp=datetime.utcnow(),
             data_used=data_used
         )
@@ -162,6 +164,7 @@ class ReActDecisionEngine:
         return ReasoningStep(
             step_type="observation",
             content=content,
+            confidence=0.85,  # Observations based on data
             timestamp=datetime.utcnow(),
             data_used=data_used
         )

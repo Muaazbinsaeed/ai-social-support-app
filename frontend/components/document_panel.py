@@ -79,7 +79,8 @@ def show_document_upload_interface():
     elif bank_statement_file:
         # New file uploaded
         if validate_file_upload(bank_statement_file, 'bank_statement'):
-            add_uploaded_document('bank_statement', bank_statement_file.name, bank_statement_file.read())
+            file_content = bank_statement_file.read()
+            add_uploaded_document('bank_statement', bank_statement_file.name, file_content)
             set_success_message("📤 Bank statement uploaded successfully!")
             st.rerun()
 
@@ -101,7 +102,8 @@ def show_document_upload_interface():
     elif emirates_id_file:
         # New file uploaded
         if validate_file_upload(emirates_id_file, 'emirates_id'):
-            add_uploaded_document('emirates_id', emirates_id_file.name, emirates_id_file.read())
+            file_content = emirates_id_file.read()
+            add_uploaded_document('emirates_id', emirates_id_file.name, file_content)
             set_success_message("📤 Emirates ID uploaded successfully!")
             st.rerun()
 
@@ -160,6 +162,7 @@ def show_upload_actions():
         if uploaded_count > 0:
             if st.button("🗑️ Clear All", use_container_width=True):
                 clear_all_documents()
+
 
     # Show processing tips
     if uploaded_count == 2:
@@ -248,6 +251,7 @@ def start_document_processing():
 
             # Start processing
             process_result = api_client.start_processing(current_app_id)
+
             if 'error' not in process_result:
                 update_processing_status(process_result)
 

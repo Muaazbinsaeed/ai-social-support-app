@@ -19,9 +19,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from app.document_processing.ocr_service import OCRService
 from app.document_processing.document_service import DocumentService
 from app.decision_making.decision_service import DecisionService
-from app.decision_making.react_reasoning import ReActReasoning
+from app.decision_making.react_reasoning import ReActDecisionEngine
 from app.user_management.user_service import UserService
-from app.shared.llm_client import LLMClient
+from app.shared.llm_client import OllamaClient
 from app.config import settings
 
 

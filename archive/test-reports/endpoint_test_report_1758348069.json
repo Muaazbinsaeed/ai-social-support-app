@@ -1,0 +1,263 @@
+{
+  "timestamp": "2025-09-20T10:01:09.146362",
+  "total_tests": 22,
+  "successful_tests": 22,
+  "success_rate": 100.0,
+  "results": {
+    "health": [
+      {
+        "timestamp": "2025-09-20T10:01:04.502040",
+        "endpoint": "/",
+        "method": "GET",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "response_data": {
+          "name": "Social Security AI Workflow Automation System",
+          "version": "1.0.0",
+          "description": "AI-powered government social security application processing",
+          "features": [
+            "2-minute application processing",
+            "99% automation rate",
+            "Real-time status tracking",
+            "Graceful failure handling",
+            "Local AI processing"
+          ],
+          "endpoints": {
+            "documentation": "/docs",
+            "health_check": "/health",
+            "authentication": "/auth",
+            "documents": "/documents",
+            "workflow": "/workflow",
+            "applications": "/applications",
+            "analysis": "/analysis",
+            "ocr": "/ocr",
+            "decisions": "/decisions",
+            "chatbot": "/chatbot",
+            "users": "/users",
+            "document_management": "/document-management"
+          }
+        },
+        "error": null
+      },
+      {
+        "timestamp": "2025-09-20T10:01:04.506364",
+        "endpoint": "/health/basic",
+        "method": "GET",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "response_data": null,
+        "error": null
+      },
+      {
+        "timestamp": "2025-09-20T10:01:04.556056",
+        "endpoint": "/health/",
+        "method": "GET",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "response_data": null,
+        "error": null
+      },
+      {
+        "timestamp": "2025-09-20T10:01:04.561168",
+        "endpoint": "/health/database",
+        "method": "GET",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "response_data": null,
+        "error": null
+      }
+    ],
+    "auth": [
+      {
+        "timestamp": "2025-09-20T10:01:04.918210",
+        "endpoint": "/auth/register",
+        "method": "POST",
+        "status_code": 201,
+        "expected_status": 201,
+        "success": true,
+        "response_data": null,
+        "error": null
+      },
+      {
+        "timestamp": "2025-09-20T10:01:06.338171",
+        "endpoint": "/auth/login",
+        "method": "POST",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "response_data": null,
+        "error": null
+      },
+      {
+        "timestamp": "2025-09-20T10:01:06.345521",
+        "endpoint": "/auth/me",
+        "method": "GET",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "response_data": null,
+        "error": null
+      },
+      {
+        "timestamp": "2025-09-20T10:01:06.352075",
+        "endpoint": "/auth/status",
+        "method": "GET",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "response_data": null,
+        "error": null
+      },
+      {
+        "timestamp": "2025-09-20T10:01:07.063808",
+        "endpoint": "/auth/password",
+        "method": "PUT",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "response_data": null,
+        "error": null
+      },
+      {
+        "timestamp": "2025-09-20T10:01:07.070361",
+        "endpoint": "/auth/logout",
+        "method": "POST",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "response_data": null,
+        "error": null
+      },
+      {
+        "timestamp": "2025-09-20T10:01:07.077288",
+        "endpoint": "/auth/refresh",
+        "method": "POST",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "response_data": null,
+        "error": null
+      }
+    ],
+    "documents": [
+      {
+        "timestamp": "2025-09-20T10:01:07.082280",
+        "endpoint": "/documents/types",
+        "method": "GET",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "response_data": null,
+        "error": null
+      },
+      {
+        "timestamp": "2025-09-20T10:01:07.802347",
+        "endpoint": "/documents/upload",
+        "method": "POST",
+        "status_code": 201,
+        "expected_status": 201,
+        "success": true,
+        "response_data": null,
+        "error": null
+      },
+      {
+        "timestamp": "2025-09-20T10:01:07.809733",
+        "endpoint": "/documents/status/890ab8fe-51eb-4479-be0b-f5ffd9c40135",
+        "method": "GET",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "response_data": null,
+        "error": null
+      },
+      {
+        "timestamp": "2025-09-20T10:01:07.816981",
+        "endpoint": "/documents/890ab8fe-51eb-4479-be0b-f5ffd9c40135",
+        "method": "DELETE",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "response_data": null,
+        "error": null
+      }
+    ],
+    "workflow": [
+      {
+        "timestamp": "2025-09-20T10:01:08.279127",
+        "endpoint": "/workflow/start-application",
+        "method": "POST",
+        "status_code": 201,
+        "expected_status": 201,
+        "success": true,
+        "response_data": null,
+        "error": null
+      },
+      {
+        "timestamp": "2025-09-20T10:01:08.307189",
+        "endpoint": "/workflow/status/a785b112-c6a6-45ba-858c-59cb23e6d509",
+        "method": "GET",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "response_data": null,
+        "error": null
+      },
+      {
+        "timestamp": "2025-09-20T10:01:08.378548",
+        "endpoint": "/workflow/process/a785b112-c6a6-45ba-858c-59cb23e6d509",
+        "method": "POST",
+        "status_code": 202,
+        "expected_status": 202,
+        "success": true,
+        "response_data": null,
+        "error": null
+      }
+    ],
+    "applications": [
+      {
+        "timestamp": "2025-09-20T10:01:09.100705",
+        "endpoint": "/applications/test-app-id/results",
+        "method": "GET",
+        "status_code": 400,
+        "expected_status": 400,
+        "success": true,
+        "response_data": null,
+        "error": null
+      },
+      {
+        "timestamp": "2025-09-20T10:01:09.118175",
+        "endpoint": "/applications/",
+        "method": "GET",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "response_data": null,
+        "error": null
+      },
+      {
+        "timestamp": "2025-09-20T10:01:09.125618",
+        "endpoint": "/applications/test-app-id",
+        "method": "GET",
+        "status_code": 400,
+        "expected_status": 400,
+        "success": true,
+        "response_data": null,
+        "error": null
+      },
+      {
+        "timestamp": "2025-09-20T10:01:09.146232",
+        "endpoint": "/applications/test-app-id",
+        "method": "PUT",
+        "status_code": 400,
+        "expected_status": 400,
+        "success": true,
+        "response_data": null,
+        "error": null
+      }
+    ]
+  }
+}

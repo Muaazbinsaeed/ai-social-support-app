@@ -16,9 +16,9 @@ celery_app = Celery(
     broker=settings.celery_broker_url,
     backend=settings.celery_result_backend,
     include=[
-        # 'app.workers.document_worker',
-        # 'app.workers.decision_worker',
-        # 'app.workers.cleanup_worker'
+        'app.workers.document_worker',
+        'app.workers.decision_worker',
+        'app.workers.cleanup_worker'
     ]
 )
 

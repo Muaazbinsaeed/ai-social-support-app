@@ -289,7 +289,7 @@ def show_result_actions():
     st.markdown("---")
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        if st.button("🆕 Start New Application", use_container_width=True, type="primary"):
+        if st.button("🆕 Start New Application", use_container_width=True, type="primary", key="results_start_new_app"):
             start_new_application()
 
 
@@ -402,7 +402,7 @@ def show_chat_support():
 def start_new_application():
     """Start a new application"""
     # Confirm action
-    if st.button("✅ Confirm: Start New Application", type="secondary"):
+    if st.button("✅ Confirm: Start New Application", type="secondary", key="confirm_start_new_app"):
         reset_application_state()
         set_success_message("🆕 Ready for new application!")
         st.rerun()

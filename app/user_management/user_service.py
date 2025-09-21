@@ -186,3 +186,8 @@ class UserService:
 
         logger.info("User profile updated", user_id=str(user.id))
         return user
+
+
+# Standalone function aliases for convenience
+hash_password = UserService.hash_password
+verify_password = UserService.verify_password

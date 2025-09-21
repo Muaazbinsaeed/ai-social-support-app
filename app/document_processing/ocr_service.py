@@ -8,7 +8,6 @@ from pathlib import Path
 import cv2
 import numpy as np
 from PIL import Image
-import fitz  # PyMuPDF
 
 from app.shared.exceptions import DocumentProcessingError
 from app.shared.logging_config import get_logger
@@ -25,13 +24,16 @@ class OCRService:
         self._initialize_reader()
 
     def _initialize_reader(self):
-        """Initialize EasyOCR reader with error handling"""
+        """Initialize Tesseract OCR with error handling"""
         try:
-            import easyocr
-            self.reader = easyocr.Reader(['en', 'ar'], gpu=False, verbose=False)
-            logger.info("EasyOCR reader initialized successfully")
+            import pytesseract
+            from PIL import Image
+            # Test if tesseract is available
+            pytesseract.image_to_string(Image.new('RGB', (100, 100), color='white'))
+            self.reader = "tesseract"
+            logger.info("Tesseract OCR initialized successfully")
         except Exception as e:
-            logger.error("Failed to initialize EasyOCR reader", error=str(e))
+            logger.error("Failed to initialize Tesseract OCR", error=str(e))
             self.reader = None
 
     def _preprocess_image(self, image_array: np.ndarray) -> np.ndarray:
@@ -60,24 +62,19 @@ class OCRService:
             return image_array
 
     def _pdf_to_images(self, pdf_path: str) -> List[np.ndarray]:
-        """Convert PDF pages to images"""
+        """Convert PDF pages to images using pdf2image"""
         try:
-            doc = fitz.open(pdf_path)
+            from pdf2image import convert_from_path
+
+            # Convert PDF to PIL images
+            pil_images = convert_from_path(pdf_path, dpi=300)
             images = []
 
-            for page_num in range(len(doc)):
-                page = doc[page_num]
-                # Get page as image with high resolution
-                mat = fitz.Matrix(2, 2)  # 2x zoom for better quality
-                pix = page.get_pixmap(matrix=mat)
-                img_data = pix.tobytes("ppm")
-
-                # Convert to numpy array
-                img = Image.open(fitz.io.BytesIO(img_data))
-                img_array = np.array(img)
+            for pil_img in pil_images:
+                # Convert PIL to numpy array
+                img_array = np.array(pil_img)
                 images.append(img_array)
 
-            doc.close()
             logger.info(f"Converted PDF to {len(images)} images", pdf_path=pdf_path)
             return images
 
@@ -127,27 +124,40 @@ class OCRService:
                 # Preprocess image
                 processed_image = self._preprocess_image(image)
 
-                # Extract text using EasyOCR
-                results = self.reader.readtext(processed_image, detail=1, paragraph=False)
+                # Extract text using pytesseract
+                import pytesseract
+                from PIL import Image as PILImage
 
-                page_text = []
-                page_confidences = []
-                page_regions = []
+                # Convert numpy array to PIL Image
+                pil_image = PILImage.fromarray(processed_image)
 
-                for (bbox, text, confidence) in results:
-                    if text.strip() and confidence > 0.3:  # Filter low confidence results
-                        page_text.append(text.strip())
-                        page_confidences.append(confidence)
-                        page_regions.append({
-                            "text": text.strip(),
-                            "confidence": float(confidence),
-                            "bbox": bbox,
+                # Extract text with pytesseract
+                text = pytesseract.image_to_string(pil_image, config='--psm 6')
+
+                # Get data for confidence scores (optional)
+                try:
+                    data = pytesseract.image_to_data(pil_image, output_type=pytesseract.Output.DICT)
+                    confidences = [int(conf) for conf in data['conf'] if int(conf) > 0]
+                    avg_confidence = sum(confidences) / len(confidences) if confidences else 80
+                except:
+                    avg_confidence = 80  # Default confidence
+
+                if text.strip():
+                    page_text = [line.strip() for line in text.split('\n') if line.strip()]
+                    all_text.extend(page_text)
+
+                    # Create confidence scores for each text line
+                    line_confidences = [avg_confidence / 100.0] * len(page_text)
+                    all_confidence_scores.extend(line_confidences)
+
+                    # Create regions for each line
+                    for j, line in enumerate(page_text):
+                        all_regions.append({
+                            "text": line,
+                            "confidence": avg_confidence / 100.0,
+                            "bbox": [[0, j*20], [1000, j*20], [1000, (j+1)*20], [0, (j+1)*20]],  # Mock bbox
                             "page": i
                         })
-
-                all_text.extend(page_text)
-                all_confidence_scores.extend(page_confidences)
-                all_regions.extend(page_regions)
 
             # Combine all text
             extracted_text = "\n".join(all_text)
@@ -190,41 +200,48 @@ class OCRService:
         # Simulate processing time
         time.sleep(1)
 
-        # Return mock data based on document type
-        if "bank_statement" in file_path.lower():
+        # Return mock data based on document type or file name
+        if "bank" in file_path.lower() or "statement" in file_path.lower():
             mock_text = """
             EMIRATES NBD BANK
-            Account Statement
-            Account Number: 1234567890
-            Statement Period: November 2024
+            Personal Banking
+            ACCOUNT STATEMENT
 
-            Account Holder: Ahmed Ali Hassan
-            Emirates ID: 784-1990-1234567-8
+            Account Holder: Muaaz Bin Saeed
+            Account Number: 1013-456789-01
+            Statement Period: 01 Nov 2024 to 30 Nov 2024
 
-            Opening Balance: AED 15,250.00
+            OPENING BALANCE                     AED 15,250.00
 
-            Transactions:
-            01/11/2024  Salary Credit        +8,500.00
-            05/11/2024  Grocery Store        -156.75
-            10/11/2024  Fuel Payment         -180.00
-            15/11/2024  Utility Bill         -420.50
-            20/11/2024  ATM Withdrawal       -500.00
-            25/11/2024  Online Transfer      -200.00
+            TRANSACTION DETAILS:
+            01/11/2024  SALARY CREDIT           +AED 8,500.00  BAL: 23,750.00
+            03/11/2024  GROCERY STORE           -AED 156.75    BAL: 23,593.25
+            05/11/2024  FUEL PAYMENT            -AED 180.00    BAL: 23,413.25
+            10/11/2024  UTILITY BILL            -AED 420.50    BAL: 22,992.75
+            15/11/2024  ATM WITHDRAWAL          -AED 500.00    BAL: 22,492.75
+            20/11/2024  ONLINE TRANSFER         -AED 200.00    BAL: 22,292.75
+            25/11/2024  RESTAURANT              -AED 85.50     BAL: 22,207.25
 
-            Closing Balance: AED 22,292.75
+            CLOSING BALANCE                     AED 22,207.25
+
+            Monthly Income (Salary): AED 8,500.00
+            Total Credits: AED 8,500.00
+            Total Debits: AED 1,542.75
+
+            For assistance: Call 600-52-6262
             """
         else:  # Emirates ID
             mock_text = """
             UNITED ARAB EMIRATES
             IDENTITY CARD
 
-            Name: Ahmed Ali Hassan
+            Name: Muaaz Bin Saeed
             Nationality: United Arab Emirates
-            Identity No: 784-1990-1234567-8
-            Date of Birth: 15/03/1990
+            Identity No: 784-1995-1234567-8
+            Date of Birth: 15/03/1995
             Sex: M
-            Date of Issue: 12/01/2020
-            Date of Expiry: 11/01/2030
+            Date of Issue: 12/01/2022
+            Date of Expiry: 11/01/2032
             """
 
         return OCRResult(

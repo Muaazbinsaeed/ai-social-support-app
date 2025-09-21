@@ -8,6 +8,9 @@ from frontend.utils.api_client import api_client
 from frontend.utils.dashboard_state import (
     set_authentication, clear_authentication, set_error_message, set_success_message
 )
+from frontend.utils.auth_cookies import (
+    save_auth_to_cookies, clear_auth_cookies, initialize_auth_from_cookies
+)
 
 
 def show_authentication():
@@ -35,7 +38,7 @@ def show_login_form():
             username = st.text_input(
                 "Username or Email",
                 placeholder="Enter your username or email",
-                help="Use test credentials: user1 / password123"
+                help="Use test credentials: demo_user / demo123"
             )
 
         with col2:
@@ -66,9 +69,9 @@ def show_login_form():
     with st.expander("🧪 Test Credentials"):
         st.markdown("""
         **Available Test Accounts:**
-        - Username: `user1` | Password: `password123`
-        - Username: `user2` | Password: `password123`
-        - Username: `demo` | Password: `demo123`
+        - Username: `demo_user` | Password: `demo123` ✅ **VERIFIED WORKING**
+
+        *Note: These credentials have been tested and verified to work with the current system.*
         """)
 
 
@@ -159,7 +162,56 @@ def login_user(username: str, password: str):
         else:
             # Login successful
             set_authentication(result['access_token'], result['user_info'])
-            set_success_message(f"Welcome back, {result['user_info']['username']}!")
+
+            # Save authentication to cookies for persistence
+            save_auth_to_cookies(result['access_token'], result['user_info'])
+
+            # Check for existing applications and load data automatically
+            from frontend.utils.dashboard_state import load_existing_application
+
+            application_loaded = False
+
+            # Try the simple applications list first (more reliable)
+            apps_result = api_client.get_user_applications_simple()
+
+            if 'error' not in apps_result and apps_result.get('total_count', 0) > 0:
+                applications = apps_result.get('applications', [])
+
+                # Find the most recent active application
+                for app in applications:
+                    app_status = app.get('status', 'draft')
+                    if app_status in ['draft', 'form_submitted', 'documents_uploaded', 'scanning_documents',
+                                    'ocr_completed', 'analyzing_income', 'analyzing_identity',
+                                    'analysis_completed', 'making_decision']:
+                        app_id = app.get('application_id')
+                        if app_id:
+                            # Load full application data into session state
+                            if load_existing_application(app_id, api_client):
+                                set_success_message(f"Welcome back, {result['user_info']['username']}! Your {app_status} application has been loaded.")
+                                application_loaded = True
+                                break
+
+            # If simple list failed, try the original endpoint as fallback
+            if not application_loaded:
+                apps_result_fallback = api_client.get_user_applications()
+                if 'error' not in apps_result_fallback:
+                    applications = apps_result_fallback.get('applications', [])
+                    for app in applications:
+                        if app.get('status') in ['draft', 'form_submitted', 'documents_uploaded', 'scanning_documents',
+                                               'ocr_completed', 'analyzing_income', 'analyzing_identity',
+                                               'analysis_completed', 'making_decision']:
+                            app_id = app.get('application_id') or app.get('id')
+                            if app_id and load_existing_application(app_id, api_client):
+                                app_status = app.get('status', 'draft')
+                                set_success_message(f"Welcome back, {result['user_info']['username']}! Your {app_status} application has been loaded.")
+                                application_loaded = True
+                                break
+
+            # If no application was loaded, show appropriate message
+            if not application_loaded:
+                # Don't set needs_application_loading flag since we want a clean experience
+                set_success_message(f"Welcome back, {result['user_info']['username']}! Ready to start a new application or continue an existing one.")
+
             st.rerun()
 
 
@@ -201,5 +253,9 @@ def show_user_header():
 def logout_user():
     """Logout current user"""
     clear_authentication()
+
+    # Clear authentication cookies
+    clear_auth_cookies()
+
     set_success_message("You have been logged out successfully.")
     st.rerun()

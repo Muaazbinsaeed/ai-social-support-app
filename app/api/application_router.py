@@ -4,6 +4,7 @@ Application management API endpoints
 
 from datetime import datetime
 from typing import List, Optional
+import uuid
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
@@ -59,7 +60,7 @@ class ApplicationSummary(BaseModel):
     application_id: str
     status: str
     progress: int
-    submitted_at: str
+    submitted_at: Optional[str] = None
     decision: Optional[str] = None
     benefit_amount: Optional[float] = None
     last_updated: str
@@ -86,9 +87,21 @@ def get_application_results(
 ):
     """Get final application decision and results"""
     try:
+        # Convert application_id to UUID
+        try:
+            app_uuid = uuid.UUID(application_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "error": "INVALID_UUID",
+                    "message": "Invalid application ID format"
+                }
+            )
+
         # Get application
         application = db.query(Application).filter(
-            Application.id == application_id,
+            Application.id == app_uuid,
             Application.user_id == current_user.id
         ).first()
 
@@ -185,6 +198,88 @@ def get_application_results(
         )
 
 
+@router.get("/history",
+            summary="Get application history",
+            description="Retrieve all applications for the user (both active and historical)")
+def get_application_history(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get all applications for the user including history"""
+    try:
+        # Get all applications ordered by creation date (newest first)
+        applications = db.query(Application).filter(
+            Application.user_id == current_user.id
+        ).order_by(desc(Application.created_at)).all()
+
+        # Separate active and historical applications
+        active_application = None
+        historical_applications = []
+
+        for app in applications:
+            # Consider applications in processing states as active
+            if app.status in ['draft', 'form_submitted', 'documents_uploaded', 'scanning_documents',
+                            'ocr_completed', 'analyzing_income', 'analyzing_identity',
+                            'analysis_completed', 'making_decision', 'decision_completed']:
+                if active_application is None:  # Only one active at a time
+                    active_application = app
+                else:
+                    # If we have multiple processing applications, the newer one becomes active
+                    if app.created_at > active_application.created_at:
+                        historical_applications.append(active_application)
+                        active_application = app
+                    else:
+                        historical_applications.append(app)
+            else:
+                # Applications in final states (approved, rejected, needs_review) are historical
+                historical_applications.append(app)
+
+        # Build response
+        def build_app_summary(app):
+            return {
+                "application_id": str(app.id),
+                "status": app.status,
+                "progress": app.progress or 0,
+                "created_at": app.created_at.isoformat() + "Z",
+                "submitted_at": app.submitted_at.isoformat() + "Z" if app.submitted_at else None,
+                "decision": app.decision,
+                "benefit_amount": float(app.benefit_amount) if app.benefit_amount else None,
+                "form_data": {
+                    "full_name": app.full_name,
+                    "emirates_id": app.emirates_id,
+                    "phone": app.phone,
+                    "email": app.email
+                } if app.full_name else None,
+                "last_updated": (app.updated_at or app.created_at).isoformat() + "Z"
+            }
+
+        response = {
+            "active_application": build_app_summary(active_application) if active_application else None,
+            "historical_applications": [build_app_summary(app) for app in historical_applications],
+            "total_count": len(applications)
+        }
+
+        logger.info("Application history retrieved",
+                   user_id=str(current_user.id),
+                   total_applications=len(applications),
+                   active_count=1 if active_application else 0,
+                   historical_count=len(historical_applications))
+
+        return response
+
+    except Exception as e:
+        logger.error("Failed to get application history",
+                    user_id=str(current_user.id),
+                    error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "HISTORY_FETCH_FAILED",
+                "message": "Failed to retrieve application history"
+            }
+        )
+
+
 @router.get("/", response_model=ApplicationListResponse,
             summary="List user applications",
             description="Retrieve paginated list of user's applications with status and basic information")
@@ -212,17 +307,47 @@ def list_applications(
 
         # Build response
         application_summaries = []
+        logger.info(f"Processing {len(applications)} applications for user {current_user.id}")
+
         for app in applications:
-            summary = ApplicationSummary(
-                application_id=str(app.id),
-                status=app.status,
-                progress=app.progress,
-                submitted_at=app.submitted_at.isoformat() + "Z" if app.submitted_at else app.created_at.isoformat() + "Z",
-                decision=app.decision,
-                benefit_amount=float(app.benefit_amount) if app.benefit_amount else None,
-                last_updated=(app.decision_at or app.processed_at or app.updated_at or app.created_at).isoformat() + "Z"
-            )
-            application_summaries.append(summary)
+            try:
+                logger.info(f"Processing application {app.id}, status: {app.status}, created: {app.created_at}")
+
+                # Safely handle timestamp conversion
+                submitted_at = None
+                if app.submitted_at:
+                    submitted_at = app.submitted_at.isoformat() + "Z"
+                elif app.created_at:
+                    submitted_at = app.created_at.isoformat() + "Z"
+
+                # Safely determine last updated timestamp
+                last_updated = app.created_at.isoformat() + "Z"
+                for timestamp_field in [app.decision_at, app.processed_at, app.updated_at]:
+                    if timestamp_field:
+                        last_updated = timestamp_field.isoformat() + "Z"
+                        break
+
+                # Create a minimal summary that should always work
+                summary = ApplicationSummary(
+                    application_id=str(app.id) if app.id else "unknown",
+                    status=str(app.status) if app.status else "draft",
+                    progress=int(app.progress) if app.progress is not None else 0,
+                    submitted_at=submitted_at,
+                    decision=str(app.decision) if app.decision else None,
+                    benefit_amount=float(app.benefit_amount) if app.benefit_amount and app.benefit_amount != '' else None,
+                    last_updated=last_updated
+                )
+                application_summaries.append(summary)
+                logger.info(f"Successfully processed application {app.id}")
+
+            except Exception as e:
+                logger.error("Failed to process application in list",
+                              application_id=str(app.id) if hasattr(app, 'id') else 'unknown',
+                              error=str(e),
+                              error_type=type(e).__name__,
+                              app_attributes=str(dir(app))[:200])  # Log available attributes
+                # Skip this application and continue with others
+                continue
 
         logger.info("Applications list retrieved",
                    user_id=str(current_user.id),
@@ -239,14 +364,52 @@ def list_applications(
     except Exception as e:
         logger.error("Failed to list applications",
                     user_id=str(current_user.id),
-                    error=str(e))
+                    error=str(e),
+                    error_type=type(e).__name__)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
                 "error": "LIST_FETCH_FAILED",
-                "message": "Failed to retrieve applications list"
+                "message": f"Failed to retrieve applications list: {str(e)}"
             }
         )
+
+
+@router.get("/simple-list",
+            summary="Get simple list of user application IDs",
+            description="Get basic list of application IDs for current user")
+def get_simple_application_list(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get simple list of application IDs for current user"""
+    try:
+        applications = db.query(Application.id, Application.status, Application.created_at).filter(
+            Application.user_id == current_user.id
+        ).order_by(desc(Application.created_at)).all()
+
+        app_list = []
+        for app in applications:
+            app_list.append({
+                "application_id": str(app.id),
+                "status": app.status,
+                "created_at": app.created_at.isoformat() + "Z" if app.created_at else None
+            })
+
+        return {
+            "applications": app_list,
+            "total_count": len(app_list)
+        }
+
+    except Exception as e:
+        logger.error("Failed to get simple application list",
+                    user_id=str(current_user.id),
+                    error=str(e))
+        return {
+            "applications": [],
+            "total_count": 0,
+            "error": str(e)
+        }
 
 
 @router.get("/{application_id}",
@@ -259,9 +422,21 @@ def get_application(
 ):
     """Get detailed application information"""
     try:
+        # Convert application_id to UUID
+        try:
+            app_uuid = uuid.UUID(application_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "error": "INVALID_UUID",
+                    "message": "Invalid application ID format"
+                }
+            )
+
         # Get application
         application = db.query(Application).filter(
-            Application.id == application_id,
+            Application.id == app_uuid,
             Application.user_id == current_user.id
         ).first()
 
@@ -331,9 +506,21 @@ def update_application(
 ):
     """Update application data (only allowed in draft status)"""
     try:
+        # Convert application_id to UUID
+        try:
+            app_uuid = uuid.UUID(application_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "error": "INVALID_UUID",
+                    "message": "Invalid application ID format"
+                }
+            )
+
         # Get application
         application = db.query(Application).filter(
-            Application.id == application_id,
+            Application.id == app_uuid,
             Application.user_id == current_user.id
         ).first()
 

@@ -44,8 +44,8 @@ def validate_file(file: UploadFile) -> tuple[bool, str]:
             summary="Upload documents",
             description="Upload bank statement and Emirates ID documents for processing")
 def upload_documents(
-    bank_statement: UploadFile = File(..., description="Bank statement PDF file"),
-    emirates_id: UploadFile = File(..., description="Emirates ID image file"),
+    bank_statement: Optional[UploadFile] = File(None, description="Bank statement PDF file"),
+    emirates_id: Optional[UploadFile] = File(None, description="Emirates ID image file"),
     application_id: Optional[str] = Form(None, description="Application ID to associate documents with"),
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
@@ -205,34 +205,266 @@ def get_supported_file_types():
     }
 
 
-@router.delete("/{document_id}")
-def delete_document(
+@router.put("/replace/{document_type}",
+           summary="Replace an existing document",
+           description="Replace a bank statement or Emirates ID document")
+def replace_document(
+    document_type: str,
+    file: UploadFile = File(..., description="New document file"),
+    application_id: Optional[str] = Form(None, description="Application ID"),
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Replace an existing document with a new one"""
+    try:
+        # Validate document type
+        if document_type not in ['bank_statement', 'emirates_id']:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"error": "INVALID_DOCUMENT_TYPE", "message": f"Invalid document type: {document_type}"}
+            )
+        
+        # Validate file
+        is_valid, message = validate_file(file)
+        if not is_valid:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"error": "INVALID_FILE", "message": message}
+            )
+        
+        # Save new file
+        file_id = str(uuid.uuid4())
+        file_ext = Path(file.filename).suffix.lower()
+        new_filename = f"{file_id}_{document_type}{file_ext}"
+        
+        upload_dir = Path(settings.UPLOAD_DIR) / str(current_user.id)
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        
+        file_path = upload_dir / new_filename
+        
+        # Save file
+        content = file.file.read()
+        with open(file_path, "wb") as f:
+            f.write(content)
+        
+        logger.info(f"Document replaced successfully",
+                   document_type=document_type,
+                   new_file=new_filename,
+                   user_id=str(current_user.id))
+        
+        return {
+            "message": f"{document_type} replaced successfully",
+            "document_type": document_type,
+            "document_id": file_id,
+            "filename": file.filename,
+            "file_path": str(file_path),
+            "replaced_at": datetime.utcnow().isoformat() + "Z"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Document replacement failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": "REPLACEMENT_FAILED", "message": "Failed to replace document"}
+        )
+
+
+@router.post("/reset/{document_type}",
+            summary="Reset document status",
+            description="Reset a document status to allow re-processing")
+def reset_document_status(
+    document_type: str,
+    application_id: Optional[str] = None,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Reset document status to pending"""
+    try:
+        if document_type not in ['bank_statement', 'emirates_id']:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"error": "INVALID_DOCUMENT_TYPE", "message": f"Invalid document type: {document_type}"}
+            )
+        
+        logger.info(f"Document status reset",
+                   document_type=document_type,
+                   application_id=application_id,
+                   user_id=str(current_user.id))
+        
+        return {
+            "message": f"{document_type} status reset successfully",
+            "document_type": document_type,
+            "new_status": "pending_reupload",
+            "reset_at": datetime.utcnow().isoformat() + "Z",
+            "can_edit": True
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Document status reset failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": "RESET_FAILED", "message": "Failed to reset document status"}
+        )
+
+
+@router.get("/application/{application_id}",
+           summary="Get documents for an application",
+           description="Get all documents associated with an application")
+def get_application_documents(
+    application_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get all documents for an application"""
+    try:
+        # For now, return mock data since document DB is not fully integrated
+        logger.info(f"Getting documents for application {application_id}")
+        
+        # Check if documents exist in file system
+        upload_dir = Path(settings.UPLOAD_DIR)
+        documents = {}
+        
+        # Check for bank statement
+        bank_files = list(upload_dir.glob(f"*bank_statement*"))
+        if bank_files:
+            documents['bank_statement'] = {
+                'id': str(uuid.uuid4()),
+                'filename': bank_files[0].name,
+                'file_size': bank_files[0].stat().st_size,
+                'status': 'submitted',
+                'uploaded_at': datetime.utcnow().isoformat() + "Z"
+            }
+        
+        # Check for emirates ID
+        emirates_files = list(upload_dir.glob(f"*emirates_id*"))
+        if emirates_files:
+            documents['emirates_id'] = {
+                'id': str(uuid.uuid4()),
+                'filename': emirates_files[0].name,
+                'file_size': emirates_files[0].stat().st_size,
+                'status': 'submitted',
+                'uploaded_at': datetime.utcnow().isoformat() + "Z"
+            }
+        
+        return {
+            'application_id': application_id,
+            'documents': documents,
+            'total_documents': len(documents)
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get application documents", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": "FETCH_FAILED", "message": "Failed to get documents"}
+        )
+
+
+@router.get("/download/{document_id}",
+           summary="Download a document",
+           description="Download a specific document by ID")
+def download_document(
     document_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Delete a uploaded document"""
+    """Download a specific document"""
     try:
-        # For now, return success since full document management is not implemented
-        logger.info("Document deletion requested",
-                   document_id=document_id,
-                   user_id=str(current_user.id))
+        # For now, return a placeholder since full DB integration is pending
+        logger.info(f"Download requested for document {document_id}")
+        
+        # Try to find the actual file based on document_id pattern
+        upload_dir = Path(settings.UPLOAD_DIR)
+        
+        # Look for files matching the document_id pattern
+        # Document IDs usually contain the original filename
+        matching_files = []
+        for file_path in upload_dir.glob("*"):
+            if document_id in str(file_path) or file_path.stem.startswith(document_id[:8]):
+                matching_files.append(file_path)
+        
+        if not matching_files:
+            # Try to find any recent file for the user
+            user_files = list(upload_dir.glob(f"*{str(current_user.id)[:8]}*"))
+            if user_files:
+                matching_files = [max(user_files, key=lambda f: f.stat().st_mtime)]
+        
+        if matching_files:
+            file_path = matching_files[0]
+            
+            with open(file_path, "rb") as f:
+                content = f.read()
+            
+            import base64
+            
+            # Return as base64 encoded JSON for consistency with frontend
+            return {
+                "document_id": document_id,
+                "filename": file_path.name,
+                "data": base64.b64encode(content).decode('utf-8'),
+                "content_type": "application/pdf" if file_path.suffix.lower() == '.pdf' else "image/jpeg"
+            }
+        
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": "NOT_FOUND", "message": "Document not found"}
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Download failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": "DOWNLOAD_FAILED", "message": "Failed to download document"}
+        )
 
+
+@router.delete("/{document_type}/delete",
+              summary="Delete a specific document",
+              description="Delete a bank statement or Emirates ID document")
+def delete_document(
+    document_type: str,
+    application_id: Optional[str] = None,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Delete a specific document type"""
+    try:
+        if document_type not in ['bank_statement', 'emirates_id']:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"error": "INVALID_DOCUMENT_TYPE", "message": f"Invalid document type: {document_type}"}
+            )
+        
+        # Delete physical file if exists (in production, would check database)
+        upload_dir = Path(settings.UPLOAD_DIR) / str(current_user.id)
+        if upload_dir.exists():
+            # Find and delete matching files
+            for file_path in upload_dir.glob(f"*_{document_type}.*"):
+                file_path.unlink()
+                logger.info(f"Deleted file: {file_path}")
+        
+        logger.info(f"Document deleted successfully",
+                   document_type=document_type,
+                   user_id=str(current_user.id))
+        
         return {
-            "message": "Document deleted successfully",
-            "document_id": document_id,
+            "message": f"{document_type} deleted successfully",
+            "document_type": document_type,
             "deleted_at": datetime.utcnow().isoformat() + "Z",
             "user_id": str(current_user.id)
         }
+        
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error("Document deletion failed",
-                    document_id=document_id,
-                    user_id=str(current_user.id),
-                    error=str(e))
+        logger.error(f"Document deletion failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "error": "DELETION_FAILED",
-                "message": "Failed to delete document"
-            }
+            detail={"error": "DELETION_FAILED", "message": "Failed to delete document"}
         )

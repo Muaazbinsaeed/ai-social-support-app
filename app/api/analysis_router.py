@@ -4,6 +4,7 @@ Multimodal document analysis API endpoints
 
 import os
 import base64
+import uuid
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
@@ -17,7 +18,7 @@ import io
 from app.shared.database import get_db
 from app.dependencies import get_current_active_user
 from app.user_management.user_models import User
-from app.document_management.document_models import Document
+from app.document_processing.document_models import Document
 from app.shared.logging_config import get_logger
 from app.config import settings
 
@@ -171,9 +172,21 @@ async def analyze_document(
     start_time = datetime.utcnow()
 
     try:
+        # Convert document_id to UUID
+        try:
+            doc_uuid = uuid.UUID(document_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "error": "INVALID_UUID",
+                    "message": "Invalid document ID format"
+                }
+            )
+
         # Get document
         document = db.query(Document).filter(
-            Document.id == document_id,
+            Document.id == doc_uuid,
             Document.user_id == current_user.id
         ).first()
 
@@ -478,11 +491,11 @@ async def upload_and_analyze(
     """Upload and analyze document in single operation"""
     try:
         # First, create document record (simplified version)
-        from app.api.document_router import upload_document
+        from app.api.document_management_router import upload_document
 
-        # Upload document first
-        upload_result = await upload_document(file, current_user, db)
-        document_id = upload_result["document_id"]
+        # Upload document first - need to pass document_type parameter
+        upload_result = await upload_document(file, "analysis_document", None, current_user, db)
+        document_id = upload_result.id
 
         # Then analyze it
         analysis_request = DocumentAnalysisRequest(

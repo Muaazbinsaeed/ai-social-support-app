@@ -3,19 +3,20 @@ AI Decision Making API endpoints
 """
 
 import json
+import uuid
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 import requests
 
 from app.shared.database import get_db
 from app.dependencies import get_current_active_user
 from app.user_management.user_models import User
 from app.application_flow.application_models import Application
-from app.document_management.document_models import Document
+from app.document_processing.document_models import Document
 from app.shared.logging_config import get_logger
 from app.config import settings
 
@@ -64,6 +65,22 @@ class DecisionRequest(BaseModel):
     criteria_override: Optional[DecisionCriteria] = None
     force_review: bool = False
     reasoning_depth: str = "standard"  # basic, standard, detailed
+
+    @field_validator('application_id')
+    @classmethod
+    def validate_application_id(cls, v):
+        try:
+            uuid.UUID(v)
+            return v
+        except ValueError:
+            raise ValueError('application_id must be a valid UUID')
+
+    @field_validator('reasoning_depth')
+    @classmethod
+    def validate_reasoning_depth(cls, v):
+        if v not in ["basic", "standard", "detailed"]:
+            raise ValueError('reasoning_depth must be one of: basic, standard, detailed')
+        return v
 
 class DecisionResponse(BaseModel):
     decision_id: str
@@ -366,9 +383,21 @@ async def make_decision(
     start_time = datetime.utcnow()
 
     try:
+        # Convert application_id to UUID
+        try:
+            app_uuid = uuid.UUID(decision_request.application_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "error": "INVALID_UUID",
+                    "message": "Invalid application ID format"
+                }
+            )
+
         # Get application
         application = db.query(Application).filter(
-            Application.id == decision_request.application_id,
+            Application.id == app_uuid,
             Application.user_id == current_user.id
         ).first()
 
@@ -474,6 +503,25 @@ async def batch_decisions(
     start_time = datetime.utcnow()
     batch_id = f"batch_decision_{int(start_time.timestamp())}"
 
+    # Validate input
+    if not batch_request.application_ids:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "error": "EMPTY_BATCH",
+                "message": "At least one application ID is required for batch processing"
+            }
+        )
+
+    if len(batch_request.application_ids) > 100:  # Reasonable limit
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "error": "BATCH_TOO_LARGE",
+                "message": "Maximum 100 applications allowed per batch"
+            }
+        )
+
     results = []
     processed = 0
     failed = 0
@@ -557,9 +605,21 @@ async def explain_decision(
 
         application_id = parts[1]
 
+        # Convert application_id to UUID
+        try:
+            app_uuid = uuid.UUID(application_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "error": "INVALID_UUID",
+                    "message": "Invalid application ID format in decision ID"
+                }
+            )
+
         # Get application with decision
         application = db.query(Application).filter(
-            Application.id == application_id,
+            Application.id == app_uuid,
             Application.user_id == current_user.id
         ).first()
 

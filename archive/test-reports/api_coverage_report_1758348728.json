@@ -1,0 +1,1187 @@
+{
+  "timestamp": "2025-09-20T10:12:08.427269",
+  "total_endpoints": 58,
+  "tested_endpoints": 58,
+  "coverage_percentage": 100.0,
+  "modules": {
+    "Authentication": {
+      "name": "Authentication",
+      "endpoints": [
+        "POST /auth/register",
+        "POST /auth/login",
+        "GET /auth/me",
+        "GET /auth/status",
+        "PUT /auth/password",
+        "POST /auth/logout",
+        "POST /auth/refresh"
+      ],
+      "total": 7,
+      "tested": 7,
+      "coverage": 100.0
+    },
+    "Health": {
+      "name": "Health",
+      "endpoints": [
+        "GET /health/",
+        "GET /health/basic",
+        "GET /health/database"
+      ],
+      "total": 3,
+      "tested": 3,
+      "coverage": 100.0
+    },
+    "Document Upload": {
+      "name": "Document Upload",
+      "endpoints": [
+        "POST /documents/upload",
+        "GET /documents/status/{document_id}",
+        "GET /documents/types",
+        "DELETE /documents/{document_id}"
+      ],
+      "total": 4,
+      "tested": 4,
+      "coverage": 100.0
+    },
+    "Workflow": {
+      "name": "Workflow",
+      "endpoints": [
+        "POST /workflow/start-application",
+        "GET /workflow/status/{application_id}",
+        "POST /workflow/process/{application_id}"
+      ],
+      "total": 3,
+      "tested": 3,
+      "coverage": 100.0
+    },
+    "Applications": {
+      "name": "Applications",
+      "endpoints": [
+        "GET /applications/{application_id}/results",
+        "GET /applications/",
+        "GET /applications/{application_id}",
+        "PUT /applications/{application_id}"
+      ],
+      "total": 4,
+      "tested": 4,
+      "coverage": 100.0
+    },
+    "AI Analysis": {
+      "name": "AI Analysis",
+      "endpoints": [
+        "POST /analysis/documents/{document_id}",
+        "POST /analysis/bulk",
+        "POST /analysis/query",
+        "POST /analysis/upload-and-analyze"
+      ],
+      "total": 4,
+      "tested": 4,
+      "coverage": 100.0
+    },
+    "OCR Processing": {
+      "name": "OCR Processing",
+      "endpoints": [
+        "POST /ocr/documents/{document_id}",
+        "POST /ocr/batch",
+        "POST /ocr/direct",
+        "POST /ocr/upload-and-extract",
+        "GET /ocr/health"
+      ],
+      "total": 5,
+      "tested": 5,
+      "coverage": 100.0
+    },
+    "Decision Making": {
+      "name": "Decision Making",
+      "endpoints": [
+        "POST /decisions/make-decision",
+        "POST /decisions/batch",
+        "GET /decisions/criteria",
+        "POST /decisions/explain/{decision_id}",
+        "GET /decisions/health"
+      ],
+      "total": 5,
+      "tested": 5,
+      "coverage": 100.0
+    },
+    "Chatbot": {
+      "name": "Chatbot",
+      "endpoints": [
+        "POST /chatbot/chat",
+        "GET /chatbot/sessions",
+        "GET /chatbot/sessions/{session_id}",
+        "DELETE /chatbot/sessions/{session_id}",
+        "GET /chatbot/quick-help",
+        "GET /chatbot/health"
+      ],
+      "total": 6,
+      "tested": 6,
+      "coverage": 100.0
+    },
+    "User Management": {
+      "name": "User Management",
+      "endpoints": [
+        "GET /users/profile",
+        "PUT /users/profile",
+        "POST /users/change-password",
+        "DELETE /users/account",
+        "GET /users/",
+        "GET /users/{user_id}",
+        "PUT /users/{user_id}/activation",
+        "GET /users/stats/overview"
+      ],
+      "total": 8,
+      "tested": 8,
+      "coverage": 100.0
+    },
+    "Document Management": {
+      "name": "Document Management",
+      "endpoints": [
+        "POST /document-management/upload",
+        "GET /document-management/",
+        "GET /document-management/{document_id}",
+        "PUT /document-management/{document_id}",
+        "DELETE /document-management/{document_id}",
+        "GET /document-management/{document_id}/download",
+        "GET /document-management/{document_id}/processing-logs",
+        "GET /document-management/types/supported"
+      ],
+      "total": 8,
+      "tested": 8,
+      "coverage": 100.0
+    },
+    "Root": {
+      "name": "Root",
+      "endpoints": [
+        "GET /"
+      ],
+      "total": 1,
+      "tested": 1,
+      "coverage": 100.0
+    }
+  },
+  "endpoints": {
+    "POST /auth/register": {
+      "method": "POST",
+      "path": "/auth/register",
+      "module": "Authentication",
+      "summary": "Register new user",
+      "description": "Create a new user account with username, email, and password",
+      "tags": [
+        "authentication"
+      ],
+      "parameters": 0,
+      "requires_auth": false,
+      "request_body": true,
+      "responses": [
+        "201",
+        "422"
+      ],
+      "available": true
+    },
+    "POST /auth/login": {
+      "method": "POST",
+      "path": "/auth/login",
+      "module": "Authentication",
+      "summary": "User login",
+      "description": "Authenticate user with username/email and password, returns JWT token",
+      "tags": [
+        "authentication"
+      ],
+      "parameters": 0,
+      "requires_auth": false,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "GET /auth/me": {
+      "method": "GET",
+      "path": "/auth/me",
+      "module": "Authentication",
+      "summary": "Get current user",
+      "description": "Retrieve current authenticated user information",
+      "tags": [
+        "authentication"
+      ],
+      "parameters": 0,
+      "requires_auth": true,
+      "request_body": false,
+      "responses": [
+        "200"
+      ],
+      "available": true
+    },
+    "GET /auth/status": {
+      "method": "GET",
+      "path": "/auth/status",
+      "module": "Authentication",
+      "summary": "Get authentication status",
+      "description": "Check if user is authenticated and get basic info",
+      "tags": [
+        "authentication"
+      ],
+      "parameters": 0,
+      "requires_auth": true,
+      "request_body": false,
+      "responses": [
+        "200"
+      ],
+      "available": true
+    },
+    "PUT /auth/password": {
+      "method": "PUT",
+      "path": "/auth/password",
+      "module": "Authentication",
+      "summary": "Update Password",
+      "description": "Update user password",
+      "tags": [
+        "authentication"
+      ],
+      "parameters": 0,
+      "requires_auth": true,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "POST /auth/logout": {
+      "method": "POST",
+      "path": "/auth/logout",
+      "module": "Authentication",
+      "summary": "User logout",
+      "description": "Logout current user (client should discard the JWT token)",
+      "tags": [
+        "authentication"
+      ],
+      "parameters": 0,
+      "requires_auth": true,
+      "request_body": false,
+      "responses": [
+        "200"
+      ],
+      "available": true
+    },
+    "POST /auth/refresh": {
+      "method": "POST",
+      "path": "/auth/refresh",
+      "module": "Authentication",
+      "summary": "Refresh JWT token",
+      "description": "Generate a new JWT token using current valid token",
+      "tags": [
+        "authentication"
+      ],
+      "parameters": 0,
+      "requires_auth": true,
+      "request_body": false,
+      "responses": [
+        "200"
+      ],
+      "available": true
+    },
+    "GET /health/": {
+      "method": "GET",
+      "path": "/health/",
+      "module": "Health",
+      "summary": "Health Check",
+      "description": "Comprehensive system health check",
+      "tags": [
+        "health"
+      ],
+      "parameters": 0,
+      "requires_auth": false,
+      "request_body": false,
+      "responses": [
+        "200"
+      ],
+      "available": true
+    },
+    "GET /health/basic": {
+      "method": "GET",
+      "path": "/health/basic",
+      "module": "Health",
+      "summary": "Basic Health Check",
+      "description": "Basic health check - just returns OK if service is running",
+      "tags": [
+        "health"
+      ],
+      "parameters": 0,
+      "requires_auth": false,
+      "request_body": false,
+      "responses": [
+        "200"
+      ],
+      "available": true
+    },
+    "GET /health/database": {
+      "method": "GET",
+      "path": "/health/database",
+      "module": "Health",
+      "summary": "Database Health Check",
+      "description": "Database-specific health check",
+      "tags": [
+        "health"
+      ],
+      "parameters": 0,
+      "requires_auth": false,
+      "request_body": false,
+      "responses": [
+        "200"
+      ],
+      "available": true
+    },
+    "POST /documents/upload": {
+      "method": "POST",
+      "path": "/documents/upload",
+      "module": "Document Upload",
+      "summary": "Upload documents",
+      "description": "Upload bank statement and Emirates ID documents for processing",
+      "tags": [
+        "documents"
+      ],
+      "parameters": 0,
+      "requires_auth": true,
+      "request_body": true,
+      "responses": [
+        "201",
+        "422"
+      ],
+      "available": true
+    },
+    "GET /documents/status/{document_id}": {
+      "method": "GET",
+      "path": "/documents/status/{document_id}",
+      "module": "Document Upload",
+      "summary": "Get Document Status",
+      "description": "Get document processing status",
+      "tags": [
+        "documents"
+      ],
+      "parameters": 1,
+      "requires_auth": true,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "GET /documents/types": {
+      "method": "GET",
+      "path": "/documents/types",
+      "module": "Document Upload",
+      "summary": "Get Supported File Types",
+      "description": "Get supported file types and limits",
+      "tags": [
+        "documents"
+      ],
+      "parameters": 0,
+      "requires_auth": false,
+      "request_body": false,
+      "responses": [
+        "200"
+      ],
+      "available": true
+    },
+    "DELETE /documents/{document_id}": {
+      "method": "DELETE",
+      "path": "/documents/{document_id}",
+      "module": "Document Upload",
+      "summary": "Delete Document",
+      "description": "Delete a uploaded document",
+      "tags": [
+        "documents"
+      ],
+      "parameters": 1,
+      "requires_auth": true,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "POST /workflow/start-application": {
+      "method": "POST",
+      "path": "/workflow/start-application",
+      "module": "Workflow",
+      "summary": "Initialize new application workflow",
+      "description": "Create a new social security application and start the workflow process",
+      "tags": [
+        "workflow"
+      ],
+      "parameters": 0,
+      "requires_auth": true,
+      "request_body": true,
+      "responses": [
+        "201",
+        "422"
+      ],
+      "available": true
+    },
+    "GET /workflow/status/{application_id}": {
+      "method": "GET",
+      "path": "/workflow/status/{application_id}",
+      "module": "Workflow",
+      "summary": "Get detailed processing status",
+      "description": "Retrieve comprehensive workflow status with step-by-step progress",
+      "tags": [
+        "workflow"
+      ],
+      "parameters": 1,
+      "requires_auth": true,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "POST /workflow/process/{application_id}": {
+      "method": "POST",
+      "path": "/workflow/process/{application_id}",
+      "module": "Workflow",
+      "summary": "Start or retry application processing",
+      "description": "Initiate or retry the application processing workflow",
+      "tags": [
+        "workflow"
+      ],
+      "parameters": 1,
+      "requires_auth": true,
+      "request_body": true,
+      "responses": [
+        "202",
+        "422"
+      ],
+      "available": true
+    },
+    "GET /applications/{application_id}/results": {
+      "method": "GET",
+      "path": "/applications/{application_id}/results",
+      "module": "Applications",
+      "summary": "Get final application decision and results",
+      "description": "Retrieve comprehensive application results including decision, reasoning, and next steps",
+      "tags": [
+        "applications"
+      ],
+      "parameters": 1,
+      "requires_auth": true,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "GET /applications/": {
+      "method": "GET",
+      "path": "/applications/",
+      "module": "Applications",
+      "summary": "List user applications",
+      "description": "Retrieve paginated list of user's applications with status and basic information",
+      "tags": [
+        "applications"
+      ],
+      "parameters": 3,
+      "requires_auth": true,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "GET /applications/{application_id}": {
+      "method": "GET",
+      "path": "/applications/{application_id}",
+      "module": "Applications",
+      "summary": "Get single application details",
+      "description": "Retrieve detailed information for a specific application",
+      "tags": [
+        "applications"
+      ],
+      "parameters": 1,
+      "requires_auth": true,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "PUT /applications/{application_id}": {
+      "method": "PUT",
+      "path": "/applications/{application_id}",
+      "module": "Applications",
+      "summary": "Update application",
+      "description": "Update editable fields of an application (only allowed in draft status)",
+      "tags": [
+        "applications"
+      ],
+      "parameters": 1,
+      "requires_auth": true,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "POST /analysis/documents/{document_id}": {
+      "method": "POST",
+      "path": "/analysis/documents/{document_id}",
+      "module": "AI Analysis",
+      "summary": "Analyze document with multimodal AI",
+      "description": "Perform multimodal analysis on uploaded document using vision and text models",
+      "tags": [
+        "multimodal-analysis"
+      ],
+      "parameters": 1,
+      "requires_auth": true,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "POST /analysis/bulk": {
+      "method": "POST",
+      "path": "/analysis/bulk",
+      "module": "AI Analysis",
+      "summary": "Bulk analyze multiple documents",
+      "description": "Analyze multiple documents in a single request",
+      "tags": [
+        "multimodal-analysis"
+      ],
+      "parameters": 0,
+      "requires_auth": true,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "POST /analysis/query": {
+      "method": "POST",
+      "path": "/analysis/query",
+      "module": "AI Analysis",
+      "summary": "Interactive multimodal query",
+      "description": "Ask questions about images or perform visual reasoning",
+      "tags": [
+        "multimodal-analysis"
+      ],
+      "parameters": 0,
+      "requires_auth": true,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "POST /analysis/upload-and-analyze": {
+      "method": "POST",
+      "path": "/analysis/upload-and-analyze",
+      "module": "AI Analysis",
+      "summary": "Upload and analyze document in one step",
+      "description": "Upload a new document and immediately analyze it",
+      "tags": [
+        "multimodal-analysis"
+      ],
+      "parameters": 0,
+      "requires_auth": true,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "POST /ocr/documents/{document_id}": {
+      "method": "POST",
+      "path": "/ocr/documents/{document_id}",
+      "module": "OCR Processing",
+      "summary": "Extract text from document using OCR",
+      "description": "Perform OCR on uploaded document to extract text content",
+      "tags": [
+        "ocr-processing"
+      ],
+      "parameters": 1,
+      "requires_auth": true,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "POST /ocr/batch": {
+      "method": "POST",
+      "path": "/ocr/batch",
+      "module": "OCR Processing",
+      "summary": "Batch OCR processing",
+      "description": "Process multiple documents with OCR in batch",
+      "tags": [
+        "ocr-processing"
+      ],
+      "parameters": 0,
+      "requires_auth": true,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "POST /ocr/direct": {
+      "method": "POST",
+      "path": "/ocr/direct",
+      "module": "OCR Processing",
+      "summary": "Direct OCR processing",
+      "description": "Process base64 encoded image directly with OCR",
+      "tags": [
+        "ocr-processing"
+      ],
+      "parameters": 0,
+      "requires_auth": true,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "POST /ocr/upload-and-extract": {
+      "method": "POST",
+      "path": "/ocr/upload-and-extract",
+      "module": "OCR Processing",
+      "summary": "Upload and extract text in one step",
+      "description": "Upload image and immediately extract text using OCR",
+      "tags": [
+        "ocr-processing"
+      ],
+      "parameters": 0,
+      "requires_auth": true,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "GET /ocr/health": {
+      "method": "GET",
+      "path": "/ocr/health",
+      "module": "OCR Processing",
+      "summary": "OCR service health check",
+      "description": "Check OCR service health",
+      "tags": [
+        "ocr-processing"
+      ],
+      "parameters": 0,
+      "requires_auth": false,
+      "request_body": false,
+      "responses": [
+        "200"
+      ],
+      "available": true
+    },
+    "POST /decisions/make-decision": {
+      "method": "POST",
+      "path": "/decisions/make-decision",
+      "module": "Decision Making",
+      "summary": "Make AI-powered benefit decision",
+      "description": "Use AI reasoning to make benefit eligibility decision",
+      "tags": [
+        "decision-making"
+      ],
+      "parameters": 0,
+      "requires_auth": true,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "POST /decisions/batch": {
+      "method": "POST",
+      "path": "/decisions/batch",
+      "module": "Decision Making",
+      "summary": "Batch decision making",
+      "description": "Make decisions for multiple applications",
+      "tags": [
+        "decision-making"
+      ],
+      "parameters": 0,
+      "requires_auth": true,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "GET /decisions/criteria": {
+      "method": "GET",
+      "path": "/decisions/criteria",
+      "module": "Decision Making",
+      "summary": "Get decision criteria",
+      "description": "Retrieve current decision criteria and thresholds",
+      "tags": [
+        "decision-making"
+      ],
+      "parameters": 0,
+      "requires_auth": false,
+      "request_body": false,
+      "responses": [
+        "200"
+      ],
+      "available": true
+    },
+    "POST /decisions/explain/{decision_id}": {
+      "method": "POST",
+      "path": "/decisions/explain/{decision_id}",
+      "module": "Decision Making",
+      "summary": "Explain decision reasoning",
+      "description": "Get detailed explanation of decision reasoning",
+      "tags": [
+        "decision-making"
+      ],
+      "parameters": 1,
+      "requires_auth": true,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "GET /decisions/health": {
+      "method": "GET",
+      "path": "/decisions/health",
+      "module": "Decision Making",
+      "summary": "Decision service health check",
+      "description": "Check decision service health",
+      "tags": [
+        "decision-making"
+      ],
+      "parameters": 0,
+      "requires_auth": false,
+      "request_body": false,
+      "responses": [
+        "200"
+      ],
+      "available": true
+    },
+    "POST /chatbot/chat": {
+      "method": "POST",
+      "path": "/chatbot/chat",
+      "module": "Chatbot",
+      "summary": "Send chat message",
+      "description": "Send message to AI chatbot and get response",
+      "tags": [
+        "chatbot"
+      ],
+      "parameters": 0,
+      "requires_auth": true,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "GET /chatbot/sessions": {
+      "method": "GET",
+      "path": "/chatbot/sessions",
+      "module": "Chatbot",
+      "summary": "Get chat sessions",
+      "description": "Retrieve user's chat sessions",
+      "tags": [
+        "chatbot"
+      ],
+      "parameters": 0,
+      "requires_auth": true,
+      "request_body": false,
+      "responses": [
+        "200"
+      ],
+      "available": true
+    },
+    "GET /chatbot/sessions/{session_id}": {
+      "method": "GET",
+      "path": "/chatbot/sessions/{session_id}",
+      "module": "Chatbot",
+      "summary": "Get specific chat session",
+      "description": "Retrieve specific chat session by ID",
+      "tags": [
+        "chatbot"
+      ],
+      "parameters": 1,
+      "requires_auth": true,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "DELETE /chatbot/sessions/{session_id}": {
+      "method": "DELETE",
+      "path": "/chatbot/sessions/{session_id}",
+      "module": "Chatbot",
+      "summary": "Delete chat session",
+      "description": "Delete specific chat session",
+      "tags": [
+        "chatbot"
+      ],
+      "parameters": 1,
+      "requires_auth": true,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "GET /chatbot/quick-help": {
+      "method": "GET",
+      "path": "/chatbot/quick-help",
+      "module": "Chatbot",
+      "summary": "Get quick help responses",
+      "description": "Get quick help responses for common questions",
+      "tags": [
+        "chatbot"
+      ],
+      "parameters": 0,
+      "requires_auth": false,
+      "request_body": false,
+      "responses": [
+        "200"
+      ],
+      "available": true
+    },
+    "GET /chatbot/health": {
+      "method": "GET",
+      "path": "/chatbot/health",
+      "module": "Chatbot",
+      "summary": "Chatbot service health check",
+      "description": "Check chatbot service health",
+      "tags": [
+        "chatbot"
+      ],
+      "parameters": 0,
+      "requires_auth": false,
+      "request_body": false,
+      "responses": [
+        "200"
+      ],
+      "available": true
+    },
+    "GET /users/profile": {
+      "method": "GET",
+      "path": "/users/profile",
+      "module": "User Management",
+      "summary": "Get current user profile",
+      "description": "Retrieve current authenticated user's profile information",
+      "tags": [
+        "user-management"
+      ],
+      "parameters": 0,
+      "requires_auth": true,
+      "request_body": false,
+      "responses": [
+        "200"
+      ],
+      "available": true
+    },
+    "PUT /users/profile": {
+      "method": "PUT",
+      "path": "/users/profile",
+      "module": "User Management",
+      "summary": "Update user profile",
+      "description": "Update current user's profile information",
+      "tags": [
+        "user-management"
+      ],
+      "parameters": 0,
+      "requires_auth": true,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "POST /users/change-password": {
+      "method": "POST",
+      "path": "/users/change-password",
+      "module": "User Management",
+      "summary": "Change user password",
+      "description": "Change current user's password",
+      "tags": [
+        "user-management"
+      ],
+      "parameters": 0,
+      "requires_auth": true,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "DELETE /users/account": {
+      "method": "DELETE",
+      "path": "/users/account",
+      "module": "User Management",
+      "summary": "Delete user account",
+      "description": "Delete current user's account (soft delete)",
+      "tags": [
+        "user-management"
+      ],
+      "parameters": 0,
+      "requires_auth": true,
+      "request_body": false,
+      "responses": [
+        "200"
+      ],
+      "available": true
+    },
+    "GET /users/": {
+      "method": "GET",
+      "path": "/users/",
+      "module": "User Management",
+      "summary": "List all users (Admin only)",
+      "description": "Retrieve paginated list of all users - admin access required",
+      "tags": [
+        "user-management"
+      ],
+      "parameters": 4,
+      "requires_auth": true,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "GET /users/{user_id}": {
+      "method": "GET",
+      "path": "/users/{user_id}",
+      "module": "User Management",
+      "summary": "Get user by ID (Admin only)",
+      "description": "Retrieve specific user by ID - admin access required",
+      "tags": [
+        "user-management"
+      ],
+      "parameters": 1,
+      "requires_auth": true,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "PUT /users/{user_id}/activation": {
+      "method": "PUT",
+      "path": "/users/{user_id}/activation",
+      "module": "User Management",
+      "summary": "Activate/deactivate user (Admin only)",
+      "description": "Activate or deactivate user account - admin access required",
+      "tags": [
+        "user-management"
+      ],
+      "parameters": 1,
+      "requires_auth": true,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "GET /users/stats/overview": {
+      "method": "GET",
+      "path": "/users/stats/overview",
+      "module": "User Management",
+      "summary": "Get user statistics (Admin only)",
+      "description": "Retrieve user statistics and metrics - admin access required",
+      "tags": [
+        "user-management"
+      ],
+      "parameters": 0,
+      "requires_auth": true,
+      "request_body": false,
+      "responses": [
+        "200"
+      ],
+      "available": true
+    },
+    "POST /document-management/upload": {
+      "method": "POST",
+      "path": "/document-management/upload",
+      "module": "Document Management",
+      "summary": "Upload document",
+      "description": "Upload a single document with metadata",
+      "tags": [
+        "document-management"
+      ],
+      "parameters": 0,
+      "requires_auth": true,
+      "request_body": true,
+      "responses": [
+        "201",
+        "422"
+      ],
+      "available": true
+    },
+    "GET /document-management/": {
+      "method": "GET",
+      "path": "/document-management/",
+      "module": "Document Management",
+      "summary": "List documents",
+      "description": "Get paginated list of user's documents",
+      "tags": [
+        "document-management"
+      ],
+      "parameters": 5,
+      "requires_auth": true,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "GET /document-management/{document_id}": {
+      "method": "GET",
+      "path": "/document-management/{document_id}",
+      "module": "Document Management",
+      "summary": "Get document details",
+      "description": "Retrieve detailed information about a specific document",
+      "tags": [
+        "document-management"
+      ],
+      "parameters": 1,
+      "requires_auth": true,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "PUT /document-management/{document_id}": {
+      "method": "PUT",
+      "path": "/document-management/{document_id}",
+      "module": "Document Management",
+      "summary": "Update document",
+      "description": "Update document metadata and structured data",
+      "tags": [
+        "document-management"
+      ],
+      "parameters": 1,
+      "requires_auth": true,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "DELETE /document-management/{document_id}": {
+      "method": "DELETE",
+      "path": "/document-management/{document_id}",
+      "module": "Document Management",
+      "summary": "Delete document",
+      "description": "Delete a document and its associated file",
+      "tags": [
+        "document-management"
+      ],
+      "parameters": 1,
+      "requires_auth": true,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "GET /document-management/{document_id}/download": {
+      "method": "GET",
+      "path": "/document-management/{document_id}/download",
+      "module": "Document Management",
+      "summary": "Download document file",
+      "description": "Download the original document file",
+      "tags": [
+        "document-management"
+      ],
+      "parameters": 1,
+      "requires_auth": true,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "GET /document-management/{document_id}/processing-logs": {
+      "method": "GET",
+      "path": "/document-management/{document_id}/processing-logs",
+      "module": "Document Management",
+      "summary": "Get document processing logs",
+      "description": "Retrieve processing history for a document",
+      "tags": [
+        "document-management"
+      ],
+      "parameters": 1,
+      "requires_auth": true,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ],
+      "available": true
+    },
+    "GET /document-management/types/supported": {
+      "method": "GET",
+      "path": "/document-management/types/supported",
+      "module": "Document Management",
+      "summary": "Get supported document types",
+      "description": "Get list of supported document types and file formats",
+      "tags": [
+        "document-management"
+      ],
+      "parameters": 0,
+      "requires_auth": false,
+      "request_body": false,
+      "responses": [
+        "200"
+      ],
+      "available": true
+    },
+    "GET /": {
+      "method": "GET",
+      "path": "/",
+      "module": "Root",
+      "summary": "Root",
+      "description": "Root endpoint with API information",
+      "tags": [],
+      "parameters": 0,
+      "requires_auth": false,
+      "request_body": false,
+      "responses": [
+        "200"
+      ],
+      "available": true
+    }
+  }
+}

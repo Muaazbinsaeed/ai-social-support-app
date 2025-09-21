@@ -22,6 +22,7 @@ def initialize_session_state():
         st.session_state.current_application_id = None
     if 'application_form_data' not in st.session_state:
         st.session_state.application_form_data = {}
+    # Don't reinitialize application_form_data if it already has content
     if 'uploaded_documents' not in st.session_state:
         st.session_state.uploaded_documents = {}
     if 'processing_status' not in st.session_state:
@@ -67,6 +68,11 @@ def clear_authentication():
     st.session_state.uploaded_documents = {}
     st.session_state.processing_status = None
     st.session_state.application_results = None
+    
+    # Clear document state
+    st.session_state.document_state = {}
+    st.session_state.document_metadata = {}
+    st.session_state.documents_loaded = False
 
 
 def set_current_application(application_id: str):
@@ -82,8 +88,19 @@ def update_form_data(field: str, value: Any):
 
 
 def get_form_data(field: str, default: Any = None) -> Any:
-    """Get application form data"""
-    return st.session_state.application_form_data.get(field, default)
+    """Get application form data with proper fallback handling"""
+    # Ensure session state exists
+    if 'application_form_data' not in st.session_state:
+        st.session_state.application_form_data = {}
+
+    # Get the value, ensuring it's not None/empty for display
+    value = st.session_state.application_form_data.get(field, default)
+
+    # Convert None to empty string for text inputs
+    if value is None:
+        value = default if default is not None else ''
+
+    return value
 
 
 def add_uploaded_document(doc_type: str, file_name: str, file_content: bytes):
@@ -160,6 +177,54 @@ def get_success_message() -> Optional[str]:
     return success
 
 
+def load_existing_application(application_id: str, api_client) -> bool:
+    """Load existing application data into session state"""
+    try:
+        # Reset documents loaded flag to force reload
+        st.session_state.documents_loaded = False
+        
+        # Get application status and details
+        status_result = api_client.get_application_status(application_id)
+        if 'error' in status_result:
+            return False
+
+        # Set application ID
+        st.session_state.current_application_id = application_id
+
+        # Load form data if available - completely replace to avoid stale data
+        form_data = status_result.get('form_data', {})
+
+        # Always replace the entire form data dict to ensure clean state
+        st.session_state.application_form_data = form_data.copy() if form_data else {}
+
+        # Validate that essential data is present
+        if form_data:
+            required_fields = ['full_name', 'emirates_id', 'phone', 'email']
+            missing_fields = [field for field in required_fields if not form_data.get(field)]
+            if missing_fields:
+                # Fill in missing fields with empty strings to prevent display issues
+                for field in missing_fields:
+                    st.session_state.application_form_data[field] = ''
+
+        # Load processing status
+        processing_status = {
+            'current_state': status_result.get('current_state', 'draft'),
+            'progress': status_result.get('progress', 0),
+            'last_updated': status_result.get('last_updated')
+        }
+        st.session_state.processing_status = processing_status
+
+        # Load results if available
+        if status_result.get('current_state') in ['approved', 'rejected', 'needs_review']:
+            results_response = api_client.get_application_results(application_id)
+            if 'error' not in results_response:
+                st.session_state.application_results = results_response
+
+        return True
+    except Exception as e:
+        return False
+
+
 def reset_application_state():
     """Reset application state for new application"""
     st.session_state.current_application_id = None
@@ -168,6 +233,20 @@ def reset_application_state():
     st.session_state.processing_status = None
     st.session_state.application_results = None
     st.session_state.last_status_update = None
+    
+    # Clear document state
+    st.session_state.document_state = {}
+    st.session_state.document_metadata = {}
+    st.session_state.documents_loaded = False
+
+    # Clear ALL form widget states (both new_form and edit_form)
+    form_keys_to_clear = [
+        'full_name_new_form', 'emirates_id_new_form', 'phone_new_form', 'email_new_form',
+        'full_name_edit_form', 'emirates_id_edit_form', 'phone_edit_form', 'email_edit_form'
+    ]
+    for key in form_keys_to_clear:
+        if key in st.session_state:
+            del st.session_state[key]
 
 
 def is_authenticated() -> bool:
@@ -181,6 +260,11 @@ def is_authenticated() -> bool:
 def get_current_user() -> Optional[Dict[str, Any]]:
     """Get current user info"""
     return st.session_state.get('user_info')
+
+
+def get_current_application_id() -> Optional[str]:
+    """Get the current application ID"""
+    return st.session_state.get('current_application_id')
 
 
 def should_refresh_status() -> bool:

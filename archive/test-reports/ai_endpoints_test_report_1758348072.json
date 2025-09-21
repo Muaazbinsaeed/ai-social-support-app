@@ -1,0 +1,208 @@
+{
+  "timestamp": 1758348072.02786,
+  "total_tests": 24,
+  "successful_tests": 14,
+  "success_rate": 58.333333333333336,
+  "results": {
+    "analysis": [
+      {
+        "endpoint": "/analysis/documents/test-doc-id",
+        "method": "POST",
+        "status_code": 422,
+        "expected_status": 200,
+        "success": false,
+        "error": null
+      },
+      {
+        "endpoint": "/analysis/documents/test-doc-id",
+        "method": "POST",
+        "status_code": 0,
+        "expected_status": 200,
+        "success": false,
+        "error": "assert 422 in [200, 404, 500]\n +  where 422 = <Response [422 Unprocessable Content]>.status_code"
+      },
+      {
+        "endpoint": "/analysis/bulk",
+        "method": "POST",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "error": null
+      },
+      {
+        "endpoint": "/analysis/query",
+        "method": "POST",
+        "status_code": 400,
+        "expected_status": 200,
+        "success": false,
+        "error": null
+      },
+      {
+        "endpoint": "/analysis/upload-and-analyze",
+        "method": "POST",
+        "status_code": 500,
+        "expected_status": 200,
+        "success": false,
+        "error": null
+      }
+    ],
+    "ocr": [
+      {
+        "endpoint": "/ocr/documents/test-doc-id",
+        "method": "POST",
+        "status_code": 422,
+        "expected_status": 200,
+        "success": false,
+        "error": null
+      },
+      {
+        "endpoint": "/ocr/documents/test-doc-id",
+        "method": "POST",
+        "status_code": 0,
+        "expected_status": 200,
+        "success": false,
+        "error": "assert 422 in [200, 404, 500]\n +  where 422 = <Response [422 Unprocessable Content]>.status_code"
+      },
+      {
+        "endpoint": "/ocr/batch",
+        "method": "POST",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "error": null
+      },
+      {
+        "endpoint": "/ocr/direct",
+        "method": "POST",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "error": null
+      },
+      {
+        "endpoint": "/ocr/upload-and-extract",
+        "method": "POST",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "error": null
+      },
+      {
+        "endpoint": "/ocr/health",
+        "method": "GET",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "error": null
+      }
+    ],
+    "decisions": [
+      {
+        "endpoint": "/decisions/make-decision",
+        "method": "POST",
+        "status_code": 404,
+        "expected_status": 404,
+        "success": true,
+        "error": null
+      },
+      {
+        "endpoint": "/decisions/batch",
+        "method": "POST",
+        "status_code": 422,
+        "expected_status": 200,
+        "success": false,
+        "error": null
+      },
+      {
+        "endpoint": "/decisions/batch",
+        "method": "POST",
+        "status_code": 0,
+        "expected_status": 200,
+        "success": false,
+        "error": "assert 422 in [200, 400, 500]\n +  where 422 = <Response [422 Unprocessable Content]>.status_code"
+      },
+      {
+        "endpoint": "/decisions/criteria",
+        "method": "GET",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "error": null
+      },
+      {
+        "endpoint": "/decisions/explain/test-decision-id",
+        "method": "POST",
+        "status_code": 422,
+        "expected_status": 200,
+        "success": false,
+        "error": null
+      },
+      {
+        "endpoint": "/decisions/explain/test-decision-id",
+        "method": "POST",
+        "status_code": 0,
+        "expected_status": 200,
+        "success": false,
+        "error": "assert 422 in [200, 404, 500]\n +  where 422 = <Response [422 Unprocessable Content]>.status_code"
+      },
+      {
+        "endpoint": "/decisions/health",
+        "method": "GET",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "error": null
+      }
+    ],
+    "chatbot": [
+      {
+        "endpoint": "/chatbot/chat",
+        "method": "POST",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "error": null
+      },
+      {
+        "endpoint": "/chatbot/sessions",
+        "method": "GET",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "error": null
+      },
+      {
+        "endpoint": "/chatbot/sessions/test-session-123",
+        "method": "GET",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "error": null
+      },
+      {
+        "endpoint": "/chatbot/sessions/test-session-123",
+        "method": "DELETE",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "error": null
+      },
+      {
+        "endpoint": "/chatbot/quick-help",
+        "method": "GET",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "error": null
+      },
+      {
+        "endpoint": "/chatbot/health",
+        "method": "GET",
+        "status_code": 200,
+        "expected_status": 200,
+        "success": true,
+        "error": null
+      }
+    ]
+  }
+}

@@ -49,12 +49,19 @@ def check_ollama_connection() -> Dict[str, Any]:
                 models = response.json().get("models", [])
                 model_names = [model.get("name", "") for model in models]
 
-                required_models = ["moondream:1.8b", "qwen2:1.5b", "nomic-embed-text"]
-                available_models = [model for model in required_models if any(model in name for name in model_names)]
+                # Check for any working models (more flexible approach)
+                preferred_models = ["qwen2:1.5b", "llama3.2:3b", "moondream:1.8b", "nomic-embed-text"]
+                available_models = [model for model in preferred_models if any(model in name for name in model_names)]
+
+                # If we have at least one model, consider it healthy
+                # This is more practical for development environments
+                status = "healthy" if len(model_names) > 0 else "unhealthy"
+                if len(available_models) == 0 and len(model_names) > 0:
+                    status = "degraded"  # Models available but not the preferred ones
 
                 return {
-                    "status": "healthy" if len(available_models) >= 2 else "degraded",
-                    "available_models": available_models,
+                    "status": status,
+                    "available_models": available_models if available_models else model_names[:3],  # Show first 3 models
                     "total_models": len(model_names),
                     "response_time": "< 10s"
                 }
@@ -85,14 +92,16 @@ def check_qdrant_connection() -> Dict[str, Any]:
                 }
             else:
                 return {
-                    "status": "unhealthy",
-                    "error": f"HTTP {response.status_code}"
+                    "status": "unavailable",
+                    "error": f"HTTP {response.status_code}",
+                    "note": "Optional service - not required for core functionality"
                 }
     except Exception as e:
-        logger.error("Qdrant health check failed", error=str(e))
+        # Don't log as error since this is optional
         return {
-            "status": "unhealthy",
-            "error": str(e)
+            "status": "unavailable",
+            "error": "Service not running",
+            "note": "Optional service - not required for core functionality"
         }
 
 
@@ -167,12 +176,31 @@ def health_check(db: Session = Depends(get_db)):
         "memory_usage": "unknown"  # Would need system resource monitoring
     }
 
-    # Determine overall health status
-    service_statuses = [service["status"] for service in health_status["services"].values()]
-    if "unhealthy" in service_statuses:
+    # Determine overall health status - only consider core services
+    core_services = ["database", "redis", "celery_workers"]
+    core_statuses = [
+        health_status["services"][service]["status"]
+        for service in core_services
+        if service in health_status["services"]
+    ]
+
+    if "unhealthy" in core_statuses:
         health_status["status"] = "unhealthy"
-    elif "degraded" in service_statuses or "warning" in service_statuses:
+    elif "degraded" in core_statuses or "warning" in core_statuses:
         health_status["status"] = "degraded"
+    else:
+        # Check if any optional services are unhealthy (but ignore "unavailable" status)
+        optional_services = ["ollama", "qdrant", "file_system"]
+        optional_statuses = [
+            health_status["services"][service]["status"]
+            for service in optional_services
+            if service in health_status["services"] and health_status["services"][service]["status"] not in ["unavailable"]
+        ]
+
+        if "unhealthy" in optional_statuses:
+            health_status["status"] = "degraded"  # Some optional services unhealthy, but core is fine
+        else:
+            health_status["status"] = "healthy"  # All core services healthy, optional services OK or unavailable
 
     return health_status
 
