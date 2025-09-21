@@ -350,65 +350,34 @@ class APIClient:
         except Exception as e:
             return {"error": f"Processing error: {str(e)}"}
     
+    def _make_request(self, method: str, endpoint: str, **kwargs) -> Dict[str, Any]:
+        """Generic request method for API calls"""
+        try:
+            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
+                url = f"{self.base_url}{endpoint}"
+                headers = kwargs.pop('headers', self._get_headers())
+                
+                if method == 'GET':
+                    response = client.get(url, headers=headers, **kwargs)
+                elif method == 'POST':
+                    response = client.post(url, headers=headers, **kwargs)
+                elif method == 'PUT':
+                    response = client.put(url, headers=headers, **kwargs)
+                elif method == 'DELETE':
+                    response = client.delete(url, headers=headers, **kwargs)
+                else:
+                    return {"error": f"Unsupported method: {method}"}
+                
+                return self._handle_response(response)
+        except Exception as e:
+            return {"error": f"Request failed: {str(e)}"}
+    
     def get_processing_status(self, application_id: str) -> Dict[str, Any]:
         """Get detailed processing status with OCR results"""
         try:
             with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
                 response = client.get(
                     f"{self.base_url}/workflow/processing-status/{application_id}",
-                    headers=self._get_headers()
-                )
-                return self._handle_response(response)
-        except Exception as e:
-            return {"error": f"Status fetch error: {str(e)}"}
-
-    def execute_workflow_step(self, application_id: str, step_type: str, timeout: int = 60, force_retry: bool = False) -> Dict[str, Any]:
-        """Execute a specific workflow step"""
-        try:
-            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
-                response = client.post(
-                    f"{self.base_url}/workflow/steps/{application_id}/execute",
-                    headers=self._get_headers(),
-                    json={
-                        "step_type": step_type,
-                        "timeout_seconds": timeout,
-                        "force_retry": force_retry
-                    }
-                )
-                return self._handle_response(response)
-        except Exception as e:
-            return {"error": f"Step execution error: {str(e)}"}
-    
-    def get_workflow_step_status(self, application_id: str, step_type: str) -> Dict[str, Any]:
-        """Get status of a specific workflow step"""
-        try:
-            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
-                response = client.get(
-                    f"{self.base_url}/workflow/steps/{application_id}/status/{step_type}",
-                    headers=self._get_headers()
-                )
-                return self._handle_response(response)
-        except Exception as e:
-            return {"error": f"Status fetch error: {str(e)}"}
-    
-    def cancel_workflow_step(self, application_id: str, step_type: str) -> Dict[str, Any]:
-        """Cancel a running workflow step"""
-        try:
-            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
-                response = client.post(
-                    f"{self.base_url}/workflow/steps/{application_id}/cancel/{step_type}",
-                    headers=self._get_headers()
-                )
-                return self._handle_response(response)
-        except Exception as e:
-            return {"error": f"Cancel error: {str(e)}"}
-    
-    def get_workflow_steps_status(self, application_id: str) -> Dict[str, Any]:
-        """Get status of all workflow steps"""
-        try:
-            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
-                response = client.get(
-                    f"{self.base_url}/workflow/steps/{application_id}/all-steps",
                     headers=self._get_headers()
                 )
                 return self._handle_response(response)

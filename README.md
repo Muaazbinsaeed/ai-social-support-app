@@ -23,13 +23,14 @@ This enterprise-grade system delivers a **complete, working government AI workfl
 
 ## ✨ Key Features
 
-### 🎛️ **Manual Workflow Control (New in v4.4.0)**
-- **Step-by-Step Execution**: Control each processing step individually
-- **OCR with Pytesseract**: Proper text extraction from documents
-- **Cancel & Retry**: Stop running processes and retry failed steps
-- **Timeout Management**: Configurable timeout for each step (10-300s)
-- **Detailed Output**: View results and errors for each processing step
-- **Real-time Progress**: Live status updates and progress bars
+### 🎮 **Workflow Steps Manager (New in v4.4.0)**
+- **Manual Step Control**: Execute each workflow step individually with full control
+- **Real-time Monitoring**: Live progress tracking with auto-refresh capability
+- **Force Execution**: Override prerequisites when debugging or testing
+- **Error Recovery**: Retry failed steps without restarting the entire workflow
+- **Timeout Management**: Configurable timeouts (30-90 seconds) per step
+- **Detailed Outputs**: View JSON outputs and error messages for each step
+- **Visual Pipeline**: Interactive workflow visualization with status indicators
 
 ### 📄 **Advanced Document Management (v4.3.0)**
 - **Complete CRUD Operations**: Upload, view, edit, replace, delete, and reset documents
@@ -766,17 +767,7 @@ curl -X POST http://localhost:8000/documents/upload \
   -F "emirates_id=@test_emirates_id.png"
 ```
 
-### Latest Release (v4.4.0) - Manual Workflow Control
-- ✅ **Step-by-Step Processing**: Execute each workflow step independently with full control
-- ✅ **Pytesseract OCR**: Proper OCR implementation with confidence scoring
-- ✅ **Cancel & Retry**: Stop running processes and retry failed steps
-- ✅ **Timeout Protection**: Configurable timeout for each step (10-300 seconds)
-- ✅ **Detailed Status Tracking**: Real-time updates with progress bars
-- ✅ **Formatted Output**: Custom display for each step's results
-- ✅ **Error Recovery**: Detailed error messages with retry capability
-- ✅ **8 Workflow Steps**: From document validation to final review
-
-### Previous Release (v4.3.0) - Advanced Document Management
+### Latest Release (v4.3.0) - Advanced Document Management
 - ✅ **Complete Document Management**: Full CRUD operations with upload, view, edit, replace, delete, and reset
 - ✅ **Separated Workflows**: Document submission and processing are now distinct operations
 - ✅ **Session Persistence**: Documents survive page refresh and browser restart with automatic recovery

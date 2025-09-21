@@ -7,126 +7,102 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [4.4.0] - 2025-09-22
 
-### 🎛️ **MANUAL WORKFLOW CONTROL & STEP-BY-STEP PROCESSING**
-**MAJOR FEATURE RELEASE**: Complete workflow control system with manual step execution, detailed OCR processing with pytesseract, timeout management, and real-time status tracking. Each processing step can now be executed, monitored, and cancelled individually.
+### 🎮 **WORKFLOW STEPS MANAGER & MANUAL CONTROL**
 
-### 🚀 **Major Workflow Control Features**
+**MAJOR FEATURE**: Complete manual control over document processing workflow with step-by-step execution, real-time monitoring, and comprehensive error recovery.
+
+### 🔄 **Workflow Management Features**
 
 #### **Manual Step Control**
-- **✅ Individual Step Execution**: Execute each workflow step independently
-- **✅ Step-by-Step Processing**: Full control over document processing pipeline
-- **✅ Cancel Running Steps**: Stop any running process immediately
-- **✅ Retry Failed Steps**: Re-execute failed or cancelled steps
-- **✅ Timeout Configuration**: Adjustable timeout for each step (10-300 seconds)
+- **Individual Step Execution**: Execute each workflow step independently
+- **Force Execution**: Override prerequisites when needed
+- **Cancel Running Steps**: Stop long-running operations
+- **Retry Failed Steps**: Re-execute failed steps without full restart
 
-#### **Detailed OCR Processing**
-- **✅ Pytesseract Integration**: Proper OCR using pytesseract library
-- **✅ Text Extraction**: Extract text from PDFs and images
-- **✅ Confidence Scoring**: OCR confidence metrics for quality assessment
-- **✅ Preview Display**: View extracted text preview for each document
-- **✅ Processing Time**: Track OCR processing duration
+#### **Real-time Monitoring**
+- **Live Progress Tracking**: Real-time progress bars for running steps
+- **Auto-refresh Mode**: Automatic UI updates for live monitoring
+- **Execution Timing**: Duration tracking for each step
+- **Status Indicators**: Visual status colors and icons
 
-#### **Comprehensive Status Tracking**
-- **✅ Real-time Status**: Live updates for each processing step
-- **✅ Progress Monitoring**: Visual progress bars for running steps
-- **✅ Error Reporting**: Detailed error messages for failed steps
-- **✅ Duration Tracking**: Execution time for completed steps
-- **✅ Output Display**: Formatted output for each step result
+#### **Comprehensive Workflow Steps**
+1. **📝 OCR Text Extraction** (60s timeout)
+   - Extract text from documents using OCR
+   - Confidence scoring
+   - Processing time tracking
+
+2. **✅ Document Validation** (30s timeout)
+   - Format and content validation
+   - Required field checks
+   - Pattern matching verification
+
+3. **💰 Income Analysis** (45s timeout)
+   - Bank statement parsing
+   - Income calculation
+   - Eligibility assessment
+
+4. **🆔 Identity Verification** (45s timeout)
+   - Emirates ID validation
+   - Identity matching
+   - Document authenticity checks
+
+5. **🤖 AI Document Analysis** (90s timeout)
+   - Comprehensive AI analysis
+   - Risk scoring
+   - Recommendation generation
+
+6. **⚖️ Decision Making** (60s timeout)
+   - Final eligibility decision
+   - Confidence scoring
+   - Decision reasoning
 
 ### 🛠️ **Technical Implementation**
 
-#### **Backend Enhancements**
-- **New Router** (`workflow_steps_router.py`): Complete step control API
-- **Step Types**: 8 distinct workflow steps with individual handlers
-- **Async Execution**: Background processing with asyncio
-- **Timeout Management**: Configurable timeout per step
-- **Status Tracking**: In-memory status storage (Redis-ready)
+#### **Backend Architecture**
+```python
+# New Workflow Steps Router
+/app/api/workflow_steps_router.py
+- Step execution with ThreadPoolExecutor
+- Timeout management per step
+- Database persistence of results
+- Error recovery mechanisms
+```
 
 #### **Frontend Components**
-- **Workflow Control Panel** (`workflow_steps_control.py`): Manual control UI
-- **Step Display**: Expandable sections for each workflow step
-- **Control Buttons**: Start, Cancel, Retry for each step
-- **Output Formatting**: Custom display for each step type
-- **Progress Indicators**: Real-time progress for running steps
+```python
+# Workflow Steps Manager UI
+/frontend/components/workflow_steps_manager.py
+- Three-tab interface:
+  - Manual Control Tab
+  - Status Overview Tab
+  - Execution Logs Tab
+```
 
-#### **Workflow Steps**
-1. **📋 Document Validation**: Validate format and completeness
-2. **📝 OCR Text Extraction**: Extract text using pytesseract
-3. **🔤 Text Analysis**: Analyze text quality and content
-4. **🎯 Data Extraction**: Extract structured data (IDs, amounts)
-5. **💰 Income Verification**: Verify income from bank statement
-6. **🆔 Identity Verification**: Verify identity from Emirates ID
-7. **⚖️ Decision Making**: Make eligibility decision
-8. **✅ Final Review**: Final approval and review
+#### **API Endpoints**
+- `GET /workflow-steps/status/{application_id}` - Comprehensive status
+- `POST /workflow-steps/execute/{application_id}` - Execute step
+- `POST /workflow-steps/cancel/{application_id}/{step_name}` - Cancel step
 
-### 📊 **Step Output Examples**
+### 🐛 **Bug Fixes & Improvements**
+- **Document Persistence**: Fixed database saving of uploaded documents
+- **Error Handling**: Improved 404 handling in processing status
+- **Model Compatibility**: Fixed WorkflowState field issues
+- **API Client**: Added generic request method for flexibility
 
-#### **OCR Extraction Output**:
-- Text length and preview
-- Confidence scores (0-100%)
-- Processing time in milliseconds
-- Page-by-page results for PDFs
+### 📂 **Files Modified**
+- **Added**: `app/api/workflow_steps_router.py`
+- **Added**: `frontend/components/workflow_steps_manager.py`
+- **Modified**: `app/main.py` - Router registration
+- **Modified**: `app/api/document_router.py` - Database persistence
+- **Modified**: `frontend/utils/api_client.py` - Generic requests
+- **Modified**: `frontend/dashboard_app.py` - UI integration
 
-#### **Data Extraction Output**:
-- Emirates ID number
-- Account numbers
-- Income amounts
-- Personal information
-
-#### **Verification Output**:
-- Verification status (✅/❌)
-- Confidence levels
-- Threshold comparisons
-- Detailed reasons
-
-### 🎯 **User Experience Improvements**
-
-#### **Manual Control Benefits**:
-- **Debug Processing**: Step through workflow for debugging
-- **Selective Processing**: Run only needed steps
-- **Error Recovery**: Retry individual failed steps
-- **Performance Testing**: Measure each step's performance
-- **Transparency**: See exactly what happens at each stage
-
-#### **Status Visibility**:
-- **Color-coded Status**: Pending (gray), Running (orange), Completed (green), Failed (red)
-- **Timing Information**: Start time, duration, timeout remaining
-- **Error Details**: Complete error messages and stack traces
-- **Output Preview**: Formatted display of step results
-
-### 🔧 **API Endpoints Added**
-
-- **`POST /workflow/steps/{id}/execute`**: Execute a specific step
-- **`GET /workflow/steps/{id}/status/{step}`**: Get step status
-- **`POST /workflow/steps/{id}/cancel/{step}`**: Cancel running step
-- **`GET /workflow/steps/{id}/all-steps`**: Get all steps status
-
-### 📈 **Performance & Reliability**
-
-- **Timeout Protection**: Prevents steps from running indefinitely
-- **Error Handling**: Graceful failure with detailed error reporting
-- **Async Processing**: Non-blocking step execution
-- **Status Persistence**: Status maintained across page refreshes
-- **Resource Management**: Proper cleanup of cancelled steps
-
-### 🔄 **Workflow Execution Flow**
-
-1. **Upload Documents** → Files stored locally
-2. **Submit Documents** → Save to backend
-3. **Manual Control Tab** → Access step controls
-4. **Execute Steps** → Run each step individually or in sequence
-5. **Monitor Progress** → Real-time status and output
-6. **Handle Errors** → Retry failed steps as needed
-7. **View Results** → Detailed output for each step
-
-### 📋 **Files Added/Modified**
-- **`app/api/workflow_steps_router.py`**: New workflow steps control API
-- **`frontend/components/workflow_steps_control.py`**: New manual control UI
-- **`frontend/utils/api_client.py`**: Added workflow step methods
-- **`frontend/dashboard_app.py`**: Integrated manual control tab
-- **`app/main.py`**: Registered new workflow steps router
-
-This release provides complete control over the document processing workflow with transparency, debugging capabilities, and detailed status tracking at every step!
+### 💡 **User Benefits**
+- **Full Control**: Manual control over each processing step
+- **Transparency**: Complete visibility into workflow execution
+- **Reliability**: Retry failed steps without full restart
+- **Debugging**: Step-by-step execution for troubleshooting
+- **Flexibility**: Force execution when needed
 
 ---
 
