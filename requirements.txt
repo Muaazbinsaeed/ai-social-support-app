@@ -1,5 +1,8 @@
-# Social Security AI Workflow Automation System
+# AI Social Support App
 # Complete Python Dependencies for Production Deployment
+#
+# Developed by: Muaaz Bin Saeed
+# Repository: https://github.com/Muaazbinsaeed/ai-social-support-app
 
 # =========================================
 # CORE WEB FRAMEWORK & API
@@ -36,7 +39,7 @@ psycopg2-binary==2.9.10
 # =========================================
 ollama==0.1.7
 qdrant-client==1.15.1
-# easyocr==1.7.0  # Commented out due to Python 3.13 compatibility issues
+pytesseract==0.3.10  # OCR engine for text extraction
 transformers==4.35.0
 torch==2.1.0
 

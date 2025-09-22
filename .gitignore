@@ -165,3 +165,25 @@ Thumbs.db
 *.temp
 .tmp/
 .temp/
+
+# Archive folder
+archive/
+
+# Test output files
+test_*.py
+*.json
+service_validation_report_*.json
+
+# PID files
+*.pid
+
+# Test coverage
+.coverage
+htmlcov/
+coverage.xml
+.pytest_cache/
+
+# Development files
+debug_*.py
+quick_*.py
+output.md

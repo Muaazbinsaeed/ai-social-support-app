@@ -22,7 +22,6 @@ from frontend.components.navigation import show_navigation
 from frontend.components.application_panel import show_application_panel
 from frontend.components.document_management import show_enhanced_document_panel
 from frontend.components.processing_status import show_processing_status
-from frontend.components.workflow_steps_manager import show_workflow_steps_manager
 from frontend.components.status_panel import show_status_panel
 from frontend.components.results_panel import show_results_panel
 
@@ -221,19 +220,16 @@ def show_dashboard():
             show_enhanced_document_panel()
 
     with col3:
-            # Right Panel: Processing Status with OCR Results
-            with st.container():
-                # Add tabs for different views
-                tab1, tab2, tab3 = st.tabs(["🎮 Workflow Manager", "📊 Processing Status", "📈 Summary"])
-                
-                with tab1:
-                    show_workflow_steps_manager()
-                
-                with tab2:
-                    show_processing_status()
-                
-                with tab3:
-                    show_status_panel()
+        # Right Panel: Processing Status with OCR Results
+        with st.container():
+            # Add tabs for different views
+            tab1, tab2 = st.tabs(["📊 Processing Status", "📈 Summary"])
+            
+            with tab1:
+                show_processing_status()
+            
+            with tab2:
+                show_status_panel()
 
     # Show footer
     show_footer()

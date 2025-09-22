@@ -3,10 +3,16 @@ Document processing business logic
 """
 
 import time
-from typing import Optional, List, Dict, Any
+import os
+import tempfile
+import io
+from typing import Optional, List, Dict, Any, Tuple
 from sqlalchemy.orm import Session
 from decimal import Decimal
 import json
+from pathlib import Path
+from PIL import Image
+import redis
 
 from app.document_processing.document_models import Document, DocumentProcessingLog
 from app.document_processing.document_schemas import (
@@ -25,14 +31,190 @@ logger = get_logger(__name__)
 
 
 class DocumentService:
-    """Service for document processing operations"""
+    """Service for document processing operations with three-tier storage"""
 
     def __init__(self):
         self.ocr_service = OCRService()
         self.multimodal_service = MultimodalService()
         self.llm_client = OllamaClient()
+        self.file_manager = FileManager()
 
-    def create_document_record(self, db: Session, application_id: str, user_id: str,
+        # Initialize Redis for temporary storage (cache layer)
+        try:
+            self.redis_client = redis.Redis(
+                host='localhost', port=6379, db=3,
+                decode_responses=False  # We'll store binary data
+            )
+            self.redis_client.ping()
+        except Exception as e:
+            logger.warning("Redis cache unavailable, using file-based temporary storage", error=str(e))
+            self.redis_client = None
+
+    def store_document_three_tier(self, db: Session, application_id: str, user_id: str,
+                                document_upload: DocumentUpload, file_content: bytes) -> Tuple[Document, str]:
+        """Store document using three-tier approach: file system + database + cache"""
+        try:
+            # Tier 1: File System Storage (Primary)
+            file_path = self._save_to_filesystem(application_id, document_upload, file_content)
+
+            # Tier 2: Database Storage (Metadata & Results)
+            document = self._create_document_record(db, application_id, user_id, document_upload, file_path)
+
+            # Tier 3: Cache Layer (Optional for temporary processing)
+            cache_key = self._cache_document_for_processing(document.id, file_content, document_upload.mime_type)
+
+            logger.info(
+                "Document stored using three-tier approach",
+                document_id=str(document.id),
+                file_path=file_path,
+                cache_key=cache_key,
+                file_size=len(file_content)
+            )
+
+            return document, file_path
+
+        except Exception as e:
+            logger.error("Failed to store document using three-tier approach", error=str(e))
+            raise DocumentProcessingError(f"Document storage failed: {str(e)}", "DOCUMENT_STORAGE_ERROR")
+
+    def _save_to_filesystem(self, application_id: str, document_upload: DocumentUpload, file_content: bytes) -> str:
+        """Save document to file system (Tier 1)"""
+        try:
+            # Create secure directory structure: uploads/{user_id}/{application_id}/
+            app_dir = self.file_manager.ensure_upload_directory(application_id)
+
+            # Generate secure filename with timestamp
+            secure_filename = self.file_manager.generate_secure_filename(
+                document_upload.original_filename, application_id
+            )
+
+            file_path = app_dir / secure_filename
+
+            # Write file with proper permissions
+            with open(file_path, 'wb') as f:
+                f.write(file_content)
+
+            # Set secure file permissions (read/write for owner only)
+            os.chmod(file_path, 0o600)
+
+            return str(file_path)
+
+        except Exception as e:
+            logger.error("Failed to save document to filesystem", error=str(e))
+            raise FileStorageError(f"Filesystem storage failed: {str(e)}", "FILESYSTEM_ERROR")
+
+    def _cache_document_for_processing(self, document_id: str, file_content: bytes, mime_type: str) -> Optional[str]:
+        """Cache document for processing (Tier 3)"""
+        if not self.redis_client:
+            return None
+
+        try:
+            cache_key = f"doc_processing:{document_id}"
+
+            # Store in Redis with 1 hour expiration
+            self.redis_client.setex(
+                cache_key,
+                3600,  # 1 hour
+                file_content
+            )
+
+            # Store metadata separately
+            metadata_key = f"doc_meta:{document_id}"
+            self.redis_client.setex(
+                metadata_key,
+                3600,
+                json.dumps({"mime_type": mime_type, "size": len(file_content)})
+            )
+
+            return cache_key
+
+        except Exception as e:
+            logger.warning("Failed to cache document, processing will use filesystem", error=str(e))
+            return None
+
+    def get_document_for_processing(self, document_id: str) -> Tuple[bytes, str]:
+        """Get document content for processing, preferring cache"""
+        try:
+            # First try cache (Tier 3)
+            if self.redis_client:
+                cache_key = f"doc_processing:{document_id}"
+                cached_content = self.redis_client.get(cache_key)
+
+                if cached_content:
+                    metadata_key = f"doc_meta:{document_id}"
+                    metadata_str = self.redis_client.get(metadata_key)
+                    metadata = json.loads(metadata_str) if metadata_str else {}
+
+                    logger.debug("Retrieved document from cache", document_id=document_id)
+                    return cached_content, metadata.get('mime_type', 'application/octet-stream')
+
+            # Fallback to filesystem (Tier 1)
+            # This would require document record lookup, implement as needed
+            raise DocumentProcessingError("Document not available for processing", "DOCUMENT_UNAVAILABLE")
+
+        except Exception as e:
+            logger.error("Failed to retrieve document for processing", error=str(e), document_id=document_id)
+            raise
+
+    def clear_processing_cache(self, document_id: str) -> bool:
+        """Clear document from processing cache after completion"""
+        if not self.redis_client:
+            return True
+
+        try:
+            cache_key = f"doc_processing:{document_id}"
+            metadata_key = f"doc_meta:{document_id}"
+
+            deleted_count = self.redis_client.delete(cache_key, metadata_key)
+
+            logger.debug("Cleared document processing cache", document_id=document_id, deleted_keys=deleted_count)
+            return deleted_count > 0
+
+        except Exception as e:
+            logger.warning("Failed to clear processing cache", error=str(e), document_id=document_id)
+            return False
+
+    def convert_pdf_to_images(self, document_id: str, pdf_content: bytes) -> List[bytes]:
+        """Convert PDF to high-quality images for processing"""
+        try:
+            import fitz  # PyMuPDF
+
+            # Open PDF from bytes
+            pdf_doc = fitz.open(stream=pdf_content, filetype="pdf")
+
+            images = []
+            for page_num in range(pdf_doc.page_count):
+                page = pdf_doc[page_num]
+
+                # Render at high DPI (300) for better OCR
+                mat = fitz.Matrix(300/72, 300/72)  # 300 DPI
+                pix = page.get_pixmap(matrix=mat)
+
+                # Convert to PIL Image
+                img_data = pix.tobytes("png")
+                images.append(img_data)
+
+                # Cache each page image temporarily
+                if self.redis_client:
+                    page_key = f"pdf_page:{document_id}:{page_num}"
+                    self.redis_client.setex(page_key, 1800, img_data)  # 30 minutes
+
+            pdf_doc.close()
+
+            logger.info(
+                "PDF converted to images",
+                document_id=document_id,
+                page_count=len(images),
+                total_size=sum(len(img) for img in images)
+            )
+
+            return images
+
+        except Exception as e:
+            logger.error("Failed to convert PDF to images", error=str(e), document_id=document_id)
+            raise DocumentProcessingError(f"PDF conversion failed: {str(e)}", "PDF_CONVERSION_ERROR")
+
+    def _create_document_record(self, db: Session, application_id: str, user_id: str,
                              document_upload: DocumentUpload, file_path: str) -> Document:
         """Create a document record in the database"""
         try:

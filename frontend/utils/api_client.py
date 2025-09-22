@@ -350,28 +350,6 @@ class APIClient:
         except Exception as e:
             return {"error": f"Processing error: {str(e)}"}
     
-    def _make_request(self, method: str, endpoint: str, **kwargs) -> Dict[str, Any]:
-        """Generic request method for API calls"""
-        try:
-            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
-                url = f"{self.base_url}{endpoint}"
-                headers = kwargs.pop('headers', self._get_headers())
-                
-                if method == 'GET':
-                    response = client.get(url, headers=headers, **kwargs)
-                elif method == 'POST':
-                    response = client.post(url, headers=headers, **kwargs)
-                elif method == 'PUT':
-                    response = client.put(url, headers=headers, **kwargs)
-                elif method == 'DELETE':
-                    response = client.delete(url, headers=headers, **kwargs)
-                else:
-                    return {"error": f"Unsupported method: {method}"}
-                
-                return self._handle_response(response)
-        except Exception as e:
-            return {"error": f"Request failed: {str(e)}"}
-    
     def get_processing_status(self, application_id: str) -> Dict[str, Any]:
         """Get detailed processing status with OCR results"""
         try:

@@ -31,6 +31,14 @@ class Document(Base):
     processing_status = Column(String(50), default="uploaded", index=True)
     # Statuses: 'uploaded', 'processing', 'ocr_completed', 'analyzed', 'failed'
 
+    # Enhanced status tracking
+    ocr_status = Column(String(20), default="pending", index=True)
+    # OCR Statuses: 'pending', 'in_progress', 'completed', 'failed'
+    multimodal_status = Column(String(20), default="pending", index=True)
+    # Multimodal Statuses: 'pending', 'in_progress', 'completed', 'failed'
+    ocr_progress = Column(Integer, default=0)  # 0-100
+    multimodal_progress = Column(Integer, default=0)  # 0-100
+
     # OCR Results
     ocr_confidence = Column(Numeric(3, 2), nullable=True)
     extracted_text = Column(Text, nullable=True)

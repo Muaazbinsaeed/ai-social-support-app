@@ -14,7 +14,6 @@ from sqlalchemy.orm import Session
 from app.shared.database import get_db
 from app.dependencies import get_current_active_user
 from app.user_management.user_models import User
-from app.document_processing.document_models import Document
 from app.shared.logging_config import get_logger
 from app.config import settings
 
@@ -81,53 +80,12 @@ def upload_documents(
 
         # Write files to disk
         with open(bank_statement_path, "wb") as f:
-            bank_content = bank_statement.file.read()
-            f.write(bank_content)
+            content = bank_statement.file.read()
+            f.write(content)
 
         with open(emirates_id_path, "wb") as f:
-            emirates_content = emirates_id.file.read()
-            f.write(emirates_content)
-        
-        # Save documents to database if application_id is provided
-        if application_id:
-            try:
-                app_uuid = uuid.UUID(application_id)
-                
-                # Save bank statement to database
-                bank_doc = Document(
-                    id=uuid.UUID(bank_statement_id),
-                    application_id=app_uuid,
-                    user_id=current_user.id,
-                    document_type="bank_statement",
-                    filename=bank_statement.filename,
-                    file_path=str(bank_statement_path),
-                    file_size=len(bank_content),
-                    mime_type=bank_statement.content_type or "application/pdf",
-                    status="uploaded"
-                )
-                db.add(bank_doc)
-                
-                # Save emirates ID to database
-                emirates_doc = Document(
-                    id=uuid.UUID(emirates_id_id),
-                    application_id=app_uuid,
-                    user_id=current_user.id,
-                    document_type="emirates_id",
-                    filename=emirates_id.filename,
-                    file_path=str(emirates_id_path),
-                    file_size=len(emirates_content),
-                    mime_type=emirates_id.content_type or "image/jpeg",
-                    status="uploaded"
-                )
-                db.add(emirates_doc)
-                
-                db.commit()
-                logger.info("Documents saved to database",
-                           application_id=application_id,
-                           user_id=str(current_user.id))
-            except Exception as e:
-                logger.error(f"Failed to save documents to database: {str(e)}")
-                db.rollback()
+            content = emirates_id.file.read()
+            f.write(content)
 
         # Log successful upload
         logger.info("Documents uploaded successfully",
@@ -494,7 +452,7 @@ def delete_document(
         logger.info(f"Document deleted successfully",
                    document_type=document_type,
                    user_id=str(current_user.id))
-
+        
         return {
             "message": f"{document_type} deleted successfully",
             "document_type": document_type,

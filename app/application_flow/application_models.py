@@ -49,6 +49,7 @@ class Application(Base):
 
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
     submitted_at = Column(DateTime(timezone=True), nullable=True)
     processed_at = Column(DateTime(timezone=True), nullable=True)
     decision_at = Column(DateTime(timezone=True), nullable=True)

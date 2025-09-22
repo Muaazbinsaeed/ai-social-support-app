@@ -72,20 +72,32 @@ class MultimodalService:
             system_prompt = """You are an expert financial document analyst specializing in UAE bank statements.
             Extract structured information from the provided bank statement text with high accuracy.
 
-            Focus on these key fields:
-            - Monthly income (recurring deposits)
-            - Current account balance
-            - Account number
-            - Account holder name
-            - Bank name
-            - Statement period
-            - Currency (usually AED)
+            IMPORTANT: Analyze the text for patterns like:
+            - SALARY DEPOSIT, SALARY CREDIT, Monthly Salary - indicates monthly income
+            - Balance, Current Balance, Available Balance - indicates account balance
+            - Account Number formats: XXXX-XXXXXXX or similar patterns
+            - Names in ALL CAPS usually indicate account holder
+            - Bank names like EMIRATES NBD, ADCB, FAB, etc.
+            - Dates to determine statement period
+            - Transaction patterns to calculate monthly income
 
-            Return ONLY valid JSON with these exact fields: monthly_income, account_balance, account_number,
-            account_holder_name, bank_name, statement_period, currency, confidence_score.
+            Return ONLY valid JSON with these exact fields:
+            {
+                "monthly_income": <number>,
+                "account_balance": <number>,
+                "account_number": "<string>",
+                "account_holder_name": "<string>",
+                "bank_name": "<string>",
+                "statement_period": "<string>",
+                "currency": "AED",
+                "confidence_score": <decimal 0-1>,
+                "transactions_analyzed": <number>,
+                "salary_deposits_found": <number>
+            }
 
             For monetary values, use numbers only (no currency symbols).
-            For confidence_score, use a decimal between 0 and 1."""
+            Calculate monthly_income by finding recurring deposits labeled as salary or similar.
+            Use confidence_score based on data completeness and clarity."""
 
             prompt = f"""Analyze this UAE bank statement text and extract key financial information:
 
@@ -164,18 +176,35 @@ Extract the financial data and return as JSON format only."""
             system_prompt = """You are an expert document analyst specializing in UAE Emirates ID cards.
             Extract structured information from the provided Emirates ID text with high accuracy.
 
-            Focus on these key fields:
-            - Full name (as written on the ID)
-            - Emirates ID number (format: 784-YYYY-XXXXXXX-X)
-            - Nationality
-            - Date of birth (format: DD/MM/YYYY)
-            - Expiry date (format: DD/MM/YYYY)
-            - Gender
+            IMPORTANT: Look for these specific patterns:
+            - Emirates ID numbers: 784-YYYY-XXXXXXX-X format (15 digits total)
+            - Names: Usually in format "SURNAME FIRST MIDDLE" or "FIRST MIDDLE SURNAME"
+            - Dates: DD/MM/YYYY format for birth and expiry
+            - Nationality: Country names like "Pakistan", "India", "UAE", etc.
+            - Gender: "M" or "F" or "Male" or "Female"
+            - Text may be in Arabic and English - focus on English text
 
-            Return ONLY valid JSON with these exact fields: full_name, emirates_id_number, nationality,
-            date_of_birth, expiry_date, gender, confidence_score.
+            Common field labels to look for:
+            - "Name:", "Full Name:", or names appearing prominently
+            - "ID Number:", "Identity Number:", or 784-pattern
+            - "Date of Birth:", "DOB:", "Born:"
+            - "Expiry:", "Expires:", "Valid Until:"
+            - "Nationality:", "Country:"
+            - "Sex:", "Gender:"
 
-            For confidence_score, use a decimal between 0 and 1."""
+            Return ONLY valid JSON with these exact fields:
+            {
+                "full_name": "<string>",
+                "emirates_id_number": "<string>",
+                "nationality": "<string>",
+                "date_of_birth": "<DD/MM/YYYY>",
+                "expiry_date": "<DD/MM/YYYY>",
+                "gender": "<M/F>",
+                "confidence_score": <decimal 0-1>,
+                "patterns_found": <number>
+            }
+
+            Use confidence_score based on how many expected patterns were successfully identified."""
 
             prompt = f"""Analyze this UAE Emirates ID text and extract key identity information:
 

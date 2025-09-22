@@ -14,6 +14,7 @@ from app.decision_making.decision_schemas import (
     DecisionResponse, EligibilityFactors, DecisionReasoning
 )
 from app.decision_making.react_reasoning import ReActDecisionEngine
+from app.document_processing.data_aggregation_service import DataAggregationService
 from app.shared.exceptions import (
     AIServiceError, ApplicationNotFoundError, ValidationError
 )
@@ -27,6 +28,80 @@ class DecisionService:
 
     def __init__(self):
         self.react_engine = ReActDecisionEngine()
+        self.data_aggregation_service = DataAggregationService()
+
+    def make_comprehensive_eligibility_decision(self, db: Session, application_id: str) -> Decision:
+        """Make eligibility decision using comprehensive data aggregation"""
+        try:
+            logger.info("Starting comprehensive eligibility decision process", application_id=application_id)
+
+            # Check if decision already exists
+            existing_decision = db.query(Decision).filter(
+                Decision.application_id == application_id
+            ).first()
+
+            if existing_decision:
+                logger.info("Decision already exists", application_id=application_id)
+                return existing_decision
+
+            start_time = time.time()
+
+            # Aggregate all data sources
+            aggregated_data = self.data_aggregation_service.aggregate_application_data(db, application_id)
+
+            # Prepare decision input
+            decision_input = self.data_aggregation_service.prepare_decision_input(aggregated_data)
+
+            # Use ReAct reasoning engine with comprehensive data
+            decision_result, reasoning_trace = self.react_engine.make_comprehensive_decision(decision_input)
+
+            processing_time = int((time.time() - start_time) * 1000)
+
+            # Create decision record with enhanced data
+            decision = Decision(
+                application_id=application_id,
+                outcome=decision_result["outcome"],
+                confidence_score=Decimal(str(decision_result["confidence"])),
+                benefit_amount=Decimal(str(decision_result.get("benefit_amount", 0))),
+                currency=decision_result.get("currency", "AED"),
+                frequency=decision_result.get("frequency", "monthly"),
+                reasoning=decision_result.get("reasoning", {}),
+                eligibility_factors=self._extract_comprehensive_eligibility_factors(decision_input, decision_result),
+                risk_assessment=self._extract_comprehensive_risk_assessment(decision_result, aggregated_data),
+                model_name="react_comprehensive_engine",
+                model_version="2.0",
+                processing_time_ms=processing_time,
+                requires_human_review=decision_result["outcome"] == "needs_review" or decision_result["confidence"] < 0.7
+            )
+
+            # Enhanced date calculation based on comprehensive analysis
+            self._set_decision_dates(decision, decision_result, aggregated_data)
+
+            # Save decision
+            db.add(decision)
+            db.commit()
+            db.refresh(decision)
+
+            # Enhanced audit logging
+            self._create_comprehensive_audit_log(
+                db, decision.id, application_id, aggregated_data, decision_result, reasoning_trace
+            )
+
+            logger.info(
+                "Comprehensive eligibility decision completed",
+                application_id=application_id,
+                outcome=decision.outcome,
+                confidence=float(decision.confidence_score),
+                processing_time=processing_time,
+                data_sources=aggregated_data["data_quality"]["sources_available"],
+                quality_score=aggregated_data["data_quality"]["quality_score"]
+            )
+
+            return decision
+
+        except Exception as e:
+            logger.error("Comprehensive eligibility decision failed", error=str(e), application_id=application_id)
+            raise AIServiceError(f"Decision processing failed: {str(e)}", "DECISION_ERROR")
 
     def make_eligibility_decision(self, db: Session, application_id: str,
                                 applicant_data: Dict[str, Any],
@@ -375,3 +450,154 @@ class DecisionService:
             logger.error("Failed to create fallback decision", error=str(e))
             db.rollback()
             raise
+
+    def _extract_comprehensive_eligibility_factors(self, decision_input: Dict[str, Any],
+                                                 decision_result: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract comprehensive eligibility factors from decision input"""
+        try:
+            financial_info = decision_input.get("financial_info", {})
+            personal_info = decision_input.get("personal_info", {})
+            verification_info = decision_input.get("verification_info", {})
+            consistency_info = decision_input.get("consistency_info", {})
+
+            factors = {
+                "monthly_income": financial_info.get("monthly_income", 0),
+                "account_balance": financial_info.get("account_balance", 0),
+                "income_threshold_met": financial_info.get("monthly_income", 0) >= 4000,
+                "balance_threshold_met": financial_info.get("account_balance", 0) >= 1500,
+                "identity_verified": consistency_info.get("overall_consistency", 0) > 0.7,
+                "documents_complete": verification_info.get("documents_provided", 0) >= 2,
+                "data_quality_score": decision_input.get("data_quality", {}).get("quality_score", 0),
+                "sources_available": decision_input.get("sources_summary", {}).get("total_sources", 0),
+                "average_confidence": decision_input.get("sources_summary", {}).get("average_confidence", 0),
+                "name_consistency": consistency_info.get("name_consistency", 0),
+                "emirates_id_consistency": consistency_info.get("emirates_id_consistency", 0),
+                "bank_name": financial_info.get("bank_name", ""),
+                "statement_period": financial_info.get("statement_period", ""),
+                "transactions_analyzed": financial_info.get("transactions_analyzed", 0),
+                "salary_deposits_found": financial_info.get("salary_deposits_found", 0)
+            }
+
+            return factors
+
+        except Exception as e:
+            logger.error("Failed to extract comprehensive eligibility factors", error=str(e))
+            return {"error": str(e)}
+
+    def _extract_comprehensive_risk_assessment(self, decision_result: Dict[str, Any],
+                                             aggregated_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract comprehensive risk assessment"""
+        try:
+            data_quality = aggregated_data.get("data_quality", {})
+            unified_data = aggregated_data.get("unified_data", {})
+            consistency = unified_data.get("data_consistency", {})
+
+            risk_factors = {
+                "data_quality_risk": 1.0 - data_quality.get("quality_score", 0),
+                "consistency_risk": 1.0 - consistency.get("overall_consistency", 0),
+                "missing_data_risk": len(data_quality.get("missing_sources", [])) / 5.0,
+                "confidence_risk": 1.0 - data_quality.get("total_confidence", 0),
+                "identity_verification_risk": 1.0 - consistency.get("overall_consistency", 0),
+                "financial_verification_risk": 1.0 - aggregated_data.get("data_sources", {}).get("5_multimodal_bank_statement", {}).get("confidence", 0)
+            }
+
+            # Calculate overall risk score (0-1, where 1 is highest risk)
+            overall_risk = sum(risk_factors.values()) / len(risk_factors)
+
+            risk_level = "low" if overall_risk < 0.3 else "medium" if overall_risk < 0.7 else "high"
+            requires_review = overall_risk > 0.5 or decision_result.get("confidence", 0) < 0.7
+
+            return {
+                "overall_risk_score": overall_risk,
+                "risk_level": risk_level,
+                "requires_review": requires_review,
+                "risk_factors": risk_factors,
+                "review_reasons": [reason for reason in [
+                    "Low data quality" if risk_factors["data_quality_risk"] > 0.5 else None,
+                    "Data inconsistency" if risk_factors["consistency_risk"] > 0.5 else None,
+                    "Missing critical data" if risk_factors["missing_data_risk"] > 0.4 else None,
+                    "Low confidence scores" if risk_factors["confidence_risk"] > 0.5 else None,
+                    "Identity verification issues" if risk_factors["identity_verification_risk"] > 0.5 else None,
+                    "Financial verification issues" if risk_factors["financial_verification_risk"] > 0.5 else None
+                ] if reason]
+            }
+
+        except Exception as e:
+            logger.error("Failed to extract comprehensive risk assessment", error=str(e))
+            return {"error": str(e), "overall_risk_score": 0.8, "requires_review": True}
+
+    def _set_decision_dates(self, decision: Decision, decision_result: Dict[str, Any],
+                          aggregated_data: Dict[str, Any]) -> None:
+        """Set decision dates based on comprehensive analysis"""
+        try:
+            quality_score = aggregated_data.get("data_quality", {}).get("quality_score", 0)
+            confidence = decision_result.get("confidence", 0)
+
+            if decision.outcome == "approved":
+                # Faster processing for high-quality, high-confidence applications
+                if quality_score > 0.8 and confidence > 0.8:
+                    decision.effective_date = datetime.now() + timedelta(days=3)  # Fast track
+                else:
+                    decision.effective_date = datetime.now() + timedelta(days=7)  # Standard
+
+                decision.review_date = datetime.now() + timedelta(days=180)  # 6 month review
+
+            elif decision.outcome == "needs_review":
+                # Urgent review for low quality/confidence
+                if quality_score < 0.5 or confidence < 0.5:
+                    decision.review_date = datetime.now() + timedelta(days=7)  # Urgent review
+                    decision.review_priority = "high"
+                else:
+                    decision.review_date = datetime.now() + timedelta(days=14)  # Standard review
+                    decision.review_priority = "normal"
+
+        except Exception as e:
+            logger.error("Failed to set decision dates", error=str(e))
+            # Set default dates
+            if decision.outcome == "approved":
+                decision.effective_date = datetime.now() + timedelta(days=7)
+                decision.review_date = datetime.now() + timedelta(days=180)
+            elif decision.outcome == "needs_review":
+                decision.review_date = datetime.now() + timedelta(days=14)
+
+    def _create_comprehensive_audit_log(self, db: Session, decision_id: str, application_id: str,
+                                       aggregated_data: Dict[str, Any], decision_result: Dict[str, Any],
+                                       reasoning_trace: List[Dict[str, Any]]) -> None:
+        """Create comprehensive audit log with all decision data"""
+        try:
+            audit_data = {
+                "decision_id": decision_id,
+                "application_id": application_id,
+                "decision_outcome": decision_result.get("outcome"),
+                "confidence_score": decision_result.get("confidence"),
+                "benefit_amount": decision_result.get("benefit_amount"),
+                "data_sources_used": aggregated_data.get("data_quality", {}).get("sources_available"),
+                "data_quality_score": aggregated_data.get("data_quality", {}).get("quality_score"),
+                "missing_sources": aggregated_data.get("data_quality", {}).get("missing_sources"),
+                "consistency_scores": aggregated_data.get("unified_data", {}).get("data_consistency", {}),
+                "reasoning_steps": len(reasoning_trace),
+                "processing_metadata": aggregated_data.get("processing_metadata", {})
+            }
+
+            self._create_audit_log(
+                db, decision_id, application_id, "comprehensive_decision_made", "ai_system_v2",
+                previous_value=None,
+                new_value=audit_data,
+                system_context={
+                    "model_version": "react_comprehensive_engine_2.0",
+                    "aggregation_method": "five_source_aggregation",
+                    "data_sources": list(aggregated_data.get("data_sources", {}).keys()),
+                    "reasoning_trace_length": len(reasoning_trace)
+                }
+            )
+
+            logger.info(
+                "Comprehensive audit log created",
+                decision_id=decision_id,
+                application_id=application_id,
+                data_sources=audit_data["data_sources_used"],
+                quality_score=audit_data["data_quality_score"]
+            )
+
+        except Exception as e:
+            logger.error("Failed to create comprehensive audit log", error=str(e))

@@ -121,14 +121,16 @@ def get_application_results(
                 content={
                     "status": "processing",
                     "message": "Application still being processed",
+                    "current_status": application.status,
+                    "progress": application.progress or 0,
                     "estimated_completion": "45 seconds"
                 }
             )
 
-        # Build decision result
+        # Build decision result with safe type conversions
         decision = DecisionResult(
             outcome=application.decision or "needs_review",
-            confidence=float(application.decision_confidence) if application.decision_confidence else 0.0,
+            confidence=float(application.decision_confidence or 0.0),
             benefit_amount=float(application.benefit_amount) if application.benefit_amount else None,
             effective_date=application.effective_date.isoformat() + "Z" if application.effective_date else None,
             review_date=application.review_date.isoformat() + "Z" if application.review_date else None

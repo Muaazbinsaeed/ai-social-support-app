@@ -608,8 +608,8 @@ def get_processing_status(
             doc_info = {
                 "document_id": str(doc.id),
                 "document_type": doc.document_type,
-                "filename": doc.filename,
-                "status": doc.status,
+                "filename": doc.original_filename,
+                "status": doc.processing_status,
                 "ocr_status": "not_started",
                 "ocr_text": None,
                 "ocr_confidence": None,
@@ -653,9 +653,9 @@ def get_processing_status(
                     if balance_match:
                         doc_info["extracted_data"]["balance"] = balance_match.group(1)
             
-            elif doc.status == "processing":
+            elif doc.processing_status == "processing":
                 doc_info["ocr_status"] = "in_progress"
-            elif doc.status == "failed":
+            elif doc.processing_status == "failed":
                 doc_info["ocr_status"] = "failed"
             
             document_status.append(doc_info)
@@ -673,7 +673,7 @@ def get_processing_status(
                 "status": step.step_status,
                 "message": step.step_message,
                 "created_at": step.created_at.isoformat() if step.created_at else None,
-                "completed_at": step.completed_at.isoformat() if step.completed_at else None
+                "completed_at": step.updated_at.isoformat() if step.step_status == "completed" and step.updated_at else None
             }
             steps.append(step_info)
         
@@ -927,7 +927,7 @@ def process_application(
                 processing_steps.append({
                     "document_id": str(doc.id),
                     "document_type": doc.document_type,
-                    "filename": doc.filename,
+                    "filename": doc.original_filename,
                     "status": "pending_ocr"
                 })
 
@@ -944,19 +944,28 @@ def process_application(
         db.add(processing_state)
         db.commit()
 
-        # Perform inline OCR processing for demo (normally would use Celery)
+        # Perform inline OCR and multimodal processing for demo (normally would use Celery)
         import time
         if documents:
             for doc in documents:
                 try:
-                    # Update document status to processing
-                    doc.status = "processing"
+                    # Start OCR processing
+                    doc.ocr_status = "in_progress"
+                    doc.ocr_progress = 0
+                    doc.multimodal_status = "pending"
+                    doc.multimodal_progress = 0
                     db.commit()
-                    
-                    # Simulate OCR processing
-                    time.sleep(0.5)  # Simulate processing time
-                    
-                    # Add mock OCR results based on document type
+
+                    # Simulate OCR processing with progress updates
+                    doc.ocr_progress = 30
+                    db.commit()
+                    time.sleep(0.3)
+
+                    doc.ocr_progress = 70
+                    db.commit()
+                    time.sleep(0.2)
+
+                    # Complete OCR with mock results
                     if doc.document_type == "emirates_id":
                         doc.extracted_text = """
 United Arab Emirates
@@ -986,24 +995,48 @@ Monthly Income: AED 8,500.00
 Salary Credit: AED 8,500.00 (Company: Tech Solutions LLC)
                         """.strip()
                         doc.ocr_confidence = 0.88
-                    
-                    doc.status = "completed"
-                    doc.ocr_processing_time_ms = 1500
-                    
-                    # Log OCR completion
+
+                    doc.ocr_status = "completed"
+                    doc.ocr_progress = 100
+                    doc.ocr_processing_time_ms = 800
+                    db.commit()
+
+                    # Start multimodal analysis
+                    doc.multimodal_status = "in_progress"
+                    doc.multimodal_progress = 0
+                    db.commit()
+
+                    # Simulate multimodal processing
+                    time.sleep(0.4)
+                    doc.multimodal_progress = 50
+                    db.commit()
+                    time.sleep(0.3)
+
+                    # Complete multimodal analysis
+                    doc.multimodal_status = "completed"
+                    doc.multimodal_progress = 100
+                    doc.analysis_processing_time_ms = 700
+
+                    # Update overall processing status
+                    doc.processing_status = "completed"
+                    doc.processed_at = datetime.utcnow()
+
+                    # Log completion
                     ocr_complete_state = WorkflowState(
                         application_id=application.id,
-                        current_state="ocr_completed",
-                        step_name=f"ocr_{doc.document_type}",
+                        current_state="analysis_completed",
+                        step_name=f"processing_{doc.document_type}",
                         step_status="completed",
-                        step_message=f"Successfully extracted text from {doc.document_type.replace('_', ' ')}",
-                        completed_at=datetime.utcnow()
+                        step_message=f"OCR and multimodal analysis completed for {doc.document_type.replace('_', ' ')}",
+                        updated_at=datetime.utcnow()
                     )
                     db.add(ocr_complete_state)
-                    
+
                 except Exception as e:
-                    logger.error(f"OCR processing failed for document {doc.id}: {str(e)}")
-                    doc.status = "failed"
+                    logger.error(f"Document processing failed for document {doc.id}: {str(e)}")
+                    doc.ocr_status = "failed"
+                    doc.multimodal_status = "failed"
+                    doc.processing_status = "failed"
                     doc.error_message = str(e)
             
             # Update application status after OCR
@@ -1222,3 +1255,336 @@ def discard_current_application(
                 "message": "Failed to discard application"
             }
         )
+
+
+# Enhanced Status Tracking Endpoints
+
+@router.get("/status-enhanced/{application_id}",
+           summary="Get enhanced application status",
+           description="Get enhanced status with OCR and multimodal tracking details")
+def get_enhanced_status(
+    application_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get enhanced application status with detailed processing info"""
+    try:
+        # Convert application_id to UUID
+        try:
+            app_uuid = uuid.UUID(application_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "error": "INVALID_UUID",
+                    "message": "Invalid application ID format"
+                }
+            )
+
+        # Get application
+        application = db.query(Application).filter(
+            Application.id == app_uuid,
+            Application.user_id == current_user.id
+        ).first()
+
+        if not application:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "error": "APPLICATION_NOT_FOUND",
+                    "message": "Application not found or not accessible"
+                }
+            )
+
+        # Get documents
+        documents = db.query(Document).filter(
+            Document.application_id == app_uuid
+        ).all()
+
+        # Build OCR and multimodal status
+        ocr_status = {}
+        multimodal_status = {}
+
+        for doc in documents:
+            doc_type = doc.document_type
+            # Handle existing documents that might not have new fields
+            ocr_status[doc_type] = getattr(doc, 'ocr_status', 'pending')
+            multimodal_status[doc_type] = getattr(doc, 'multimodal_status', 'pending')
+
+        # Calculate progress phases
+        form_submitted = application.status != "draft"
+        documents_uploaded = len(documents) >= 2
+
+        return {
+            "application_id": str(application.id),
+            "current_status": application.status,
+            "progress": application.progress,
+            "phase": _get_current_phase(application.status),
+            "details": {
+                "form_submitted": form_submitted,
+                "documents_uploaded": documents_uploaded,
+                "ocr_status": ocr_status,
+                "multimodal_status": multimodal_status,
+                "decision": application.decision or "pending"
+            },
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Failed to get enhanced status",
+                    application_id=application_id,
+                    user_id=str(current_user.id),
+                    error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "ENHANCED_STATUS_FAILED",
+                "message": "Failed to get enhanced status"
+            }
+        )
+
+
+@router.get("/processing-details/{application_id}",
+           summary="Get processing details",
+           description="Get detailed OCR and multimodal processing status")
+def get_processing_details(
+    application_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get detailed processing status for OCR and multimodal analysis"""
+    try:
+        # Convert application_id to UUID
+        try:
+            app_uuid = uuid.UUID(application_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "error": "INVALID_UUID",
+                    "message": "Invalid application ID format"
+                }
+            )
+
+        # Get application
+        application = db.query(Application).filter(
+            Application.id == app_uuid,
+            Application.user_id == current_user.id
+        ).first()
+
+        if not application:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "error": "APPLICATION_NOT_FOUND",
+                    "message": "Application not found or not accessible"
+                }
+            )
+
+        # Get documents
+        documents = db.query(Document).filter(
+            Document.application_id == app_uuid
+        ).all()
+
+        ocr_extraction = {}
+        multimodal_analysis = {}
+        sources_ready = 0
+
+        for doc in documents:
+            doc_type = doc.document_type
+
+            # OCR status
+            ocr_extraction[doc_type] = {
+                "status": getattr(doc, 'ocr_status', 'pending'),
+                "progress": getattr(doc, 'ocr_progress', 0),
+                "confidence": float(doc.ocr_confidence) if doc.ocr_confidence else None,
+                "text_extracted": bool(doc.extracted_text)
+            }
+
+            # Multimodal status
+            multimodal_analysis[doc_type] = {
+                "status": getattr(doc, 'multimodal_status', 'pending'),
+                "progress": getattr(doc, 'multimodal_progress', 0)
+            }
+
+            # Count ready sources
+            if getattr(doc, 'ocr_status', 'pending') == "completed":
+                sources_ready += 1
+            if getattr(doc, 'multimodal_status', 'pending') == "completed":
+                sources_ready += 1
+
+        # Add form data to sources count
+        if application.status != "draft":
+            sources_ready += 1
+
+        return {
+            "application_id": str(application.id),
+            "ocr_extraction": ocr_extraction,
+            "multimodal_analysis": multimodal_analysis,
+            "all_5_sources_ready": sources_ready >= 5,
+            "sources_ready_count": sources_ready,
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Failed to get processing details",
+                    application_id=application_id,
+                    user_id=str(current_user.id),
+                    error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "PROCESSING_DETAILS_FAILED",
+                "message": "Failed to get processing details"
+            }
+        )
+
+
+@router.get("/progress/{application_id}",
+           summary="Get simple progress",
+           description="Get simple progress percentage with completed and pending steps")
+def get_simple_progress(
+    application_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get simple progress with step completion"""
+    try:
+        # Convert application_id to UUID
+        try:
+            app_uuid = uuid.UUID(application_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "error": "INVALID_UUID",
+                    "message": "Invalid application ID format"
+                }
+            )
+
+        # Get application
+        application = db.query(Application).filter(
+            Application.id == app_uuid,
+            Application.user_id == current_user.id
+        ).first()
+
+        if not application:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "error": "APPLICATION_NOT_FOUND",
+                    "message": "Application not found or not accessible"
+                }
+            )
+
+        # Get documents
+        documents = db.query(Document).filter(
+            Document.application_id == app_uuid
+        ).all()
+
+        # Calculate completed and pending steps
+        steps_completed = []
+        steps_pending = []
+
+        # Check each step
+        if application.status != "draft":
+            steps_completed.append("form_submission")
+        else:
+            steps_pending.append("form_submission")
+
+        if len(documents) >= 2:
+            steps_completed.append("document_upload")
+        else:
+            steps_pending.append("document_upload")
+
+        # Check OCR steps
+        for doc in documents:
+            doc_type = doc.document_type
+            if getattr(doc, 'ocr_status', 'pending') == "completed":
+                steps_completed.append(f"ocr_{doc_type}")
+            else:
+                steps_pending.append(f"ocr_{doc_type}")
+
+            if getattr(doc, 'multimodal_status', 'pending') == "completed":
+                steps_completed.append(f"multimodal_{doc_type}")
+            else:
+                steps_pending.append(f"multimodal_{doc_type}")
+
+        # Check decision
+        if application.decision:
+            steps_completed.append("llm_decision")
+        else:
+            steps_pending.append("llm_decision")
+
+        # Calculate overall progress (Form 20% + Upload 20% + OCR 20% + Multimodal 20% + Decision 20%)
+        progress = 0
+        if "form_submission" in steps_completed:
+            progress += 20
+        if "document_upload" in steps_completed:
+            progress += 20
+
+        # OCR progress (10% per document)
+        ocr_completed = len([s for s in steps_completed if s.startswith("ocr_")])
+        progress += (ocr_completed * 10)
+
+        # Multimodal progress (10% per document)
+        multimodal_completed = len([s for s in steps_completed if s.startswith("multimodal_")])
+        progress += (multimodal_completed * 10)
+
+        if "llm_decision" in steps_completed:
+            progress += 20
+
+        # Estimate completion time
+        total_steps = len(steps_completed) + len(steps_pending)
+        if len(steps_pending) == 0:
+            estimated_seconds = 0
+        else:
+            estimated_seconds = len(steps_pending) * 10  # Rough estimate
+
+        return {
+            "application_id": str(application.id),
+            "overall_progress": min(progress, 100),
+            "steps_completed": steps_completed,
+            "steps_pending": steps_pending,
+            "estimated_completion_seconds": estimated_seconds,
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Failed to get simple progress",
+                    application_id=application_id,
+                    user_id=str(current_user.id),
+                    error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "PROGRESS_FAILED",
+                "message": "Failed to get progress"
+            }
+        )
+
+
+def _get_current_phase(status: str) -> str:
+    """Get current phase based on application status"""
+    if status in ["draft"]:
+        return "user_setup"
+    elif status in ["form_submitted"]:
+        return "form_completed"
+    elif status in ["documents_uploaded"]:
+        return "document_management"
+    elif status in ["scanning_documents", "ocr_completed"]:
+        return "extraction"
+    elif status in ["analyzing_income", "analyzing_identity", "analysis_completed"]:
+        return "multimodal_analysis"
+    elif status in ["making_decision", "decision_completed"]:
+        return "decision_making"
+    elif status in ["approved", "rejected", "needs_review"]:
+        return "completed"
+    else:
+        return "unknown"

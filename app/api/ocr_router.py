@@ -35,21 +35,91 @@ router = APIRouter(prefix="/ocr", tags=["ocr-processing"])
 _ocr_reader = None
 
 def get_ocr_reader():
-    """Get or initialize OCR reader"""
+    """Get or initialize OCR reader using pytesseract"""
     global _ocr_reader
     if _ocr_reader is None:
         try:
-            # Mock OCR reader due to dependency conflicts
+            import pytesseract
+            
+            # Test if tesseract is available
+            try:
+                pytesseract.get_tesseract_version()
+                logger.info(f"Tesseract version: {pytesseract.get_tesseract_version()}")
+            except:
+                logger.warning("Tesseract not found, using fallback")
+            
+            class TesseractOCRReader:
+                def readtext(self, image, **kwargs):
+                    """Perform OCR using pytesseract with automatic rotation detection"""
+                    try:
+                        # Convert image to PIL if needed
+                        if isinstance(image, np.ndarray):
+                            pil_image = Image.fromarray(image)
+                        elif isinstance(image, str):
+                            pil_image = Image.open(image)
+                        else:
+                            pil_image = image
+                        
+                        # Try to detect and fix orientation (disabled for now due to false positives)
+                        # Some ID cards have security patterns that confuse orientation detection
+                        # try:
+                        #     osd = pytesseract.image_to_osd(pil_image)
+                        #     rotation = 0
+                        #     for line in osd.split('\n'):
+                        #         if 'Rotate:' in line:
+                        #             rotation = int(line.split(':')[1].strip())
+                        #             break
+                        #     
+                        #     # Rotate image if needed (use negative rotation for PIL)
+                        #     if rotation != 0:
+                        #         logger.info(f"Image needs rotation by {rotation} degrees")
+                        #         # PIL rotate uses counter-clockwise, so negate the angle
+                        #         pil_image = pil_image.rotate(-rotation, expand=True)
+                        # except Exception as e:
+                        #     logger.debug(f"OSD detection failed, proceeding without rotation: {e}")
+                        
+                        # Perform OCR with optimal settings
+                        # Try PSM 3 first (automatic page segmentation)
+                        text = pytesseract.image_to_string(pil_image, config='--psm 3')
+                        if not text.strip():
+                            # Fallback to PSM 6 if no text found
+                            text = pytesseract.image_to_string(pil_image, config='--psm 6')
+                        # Get detailed data
+                        data = pytesseract.image_to_data(pil_image, output_type=pytesseract.Output.DICT)
+                        
+                        # Format results similar to EasyOCR
+                        results = []
+                        n_boxes = len(data['text'])
+                        for i in range(n_boxes):
+                            if int(data['conf'][i]) > 0:  # Only include confident detections
+                                x, y, w, h = data['left'][i], data['top'][i], data['width'][i], data['height'][i]
+                                text_item = data['text'][i].strip()
+                                if text_item:
+                                    bbox = [[x, y], [x+w, y], [x+w, y+h], [x, y+h]]
+                                    confidence = float(data['conf'][i]) / 100.0
+                                    results.append((bbox, text_item, confidence))
+                        
+                        # If no detailed results, return the full text
+                        if not results and text.strip():
+                            results = [([[0, 0], [100, 0], [100, 20], [0, 20]], text.strip(), 0.9)]
+                        
+                        return results
+                    except Exception as e:
+                        logger.error(f"Tesseract OCR failed: {str(e)}")
+                        # Fallback to mock data
+                        return [([[0, 0], [100, 0], [100, 20], [0, 20]], "OCR processing failed", 0.5)]
+
+            _ocr_reader = TesseractOCRReader()
+            logger.info("Tesseract OCR reader initialized successfully")
+        except ImportError:
+            logger.warning("pytesseract not available, using mock OCR")
+            # Fallback to mock
             class MockOCRReader:
                 def readtext(self, image, **kwargs):
-                    # Return EasyOCR format: list of (bbox, text, confidence)
-                    # bbox should be [[x1,y1], [x2,y2], [x3,y3], [x4,y4]]
                     return [([[0, 0], [100, 0], [100, 20], [0, 20]], "Mock OCR Text", 0.9)]
-
             _ocr_reader = MockOCRReader()
-            logger.info("Mock OCR reader initialized successfully")
         except Exception as e:
-            logger.error(f"Failed to initialize EasyOCR reader: {str(e)}")
+            logger.error(f"Failed to initialize OCR reader: {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail={
@@ -142,6 +212,40 @@ def preprocess_image(image: np.ndarray) -> np.ndarray:
         return image
 
 
+def enhance_image_for_ocr(image: Image.Image) -> Image.Image:
+    """Enhance image quality for better OCR results"""
+    try:
+        # Convert to RGB if needed
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+
+        # Convert to numpy array for OpenCV processing
+        img_array = np.array(image)
+
+        # Convert RGB to BGR for OpenCV
+        img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+
+        # Convert to grayscale
+        gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+
+        # Apply adaptive thresholding to handle different lighting conditions
+        binary = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+
+        # Remove noise with morphological operations
+        kernel = np.ones((1,1), np.uint8)
+        cleaned = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
+        cleaned = cv2.morphologyEx(cleaned, cv2.MORPH_OPEN, kernel)
+
+        # Convert back to PIL Image
+        enhanced_image = Image.fromarray(cleaned)
+
+        return enhanced_image
+
+    except Exception as e:
+        logger.warning(f"Image enhancement failed, using original: {e}")
+        return image
+
+
 def extract_text_from_image(image_data: bytes, language_hints: List[str], preprocess: bool = True) -> OCRResult:
     """Extract text from image using EasyOCR"""
     try:
@@ -154,9 +258,16 @@ def extract_text_from_image(image_data: bytes, language_hints: List[str], prepro
         if image is None:
             raise ValueError("Invalid image data")
 
-        # Preprocess if requested
+        # Enhanced preprocessing for better OCR results
         if preprocess:
-            processed_image = preprocess_image(image)
+            # Convert OpenCV image to PIL for our enhanced preprocessing
+            pil_image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+            enhanced_pil = enhance_image_for_ocr(pil_image)
+            # Convert back to numpy array
+            processed_image = np.array(enhanced_pil)
+            # If it's grayscale, convert to 3-channel for consistency
+            if len(processed_image.shape) == 2:
+                processed_image = cv2.cvtColor(processed_image, cv2.COLOR_GRAY2BGR)
         else:
             processed_image = image
 
@@ -246,8 +357,10 @@ def extract_text_from_pdf(pdf_path: str, language_hints: List[str], preprocess: 
                 )
                 results.append(result)
             else:
-                # Convert page to image and use OCR
-                pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))  # 2x scale for better OCR
+                # Convert page to image and use OCR with enhanced quality
+                # Use 300 DPI conversion for better OCR accuracy
+                mat = fitz.Matrix(300/72, 300/72)  # 300 DPI conversion
+                pix = page.get_pixmap(matrix=mat, alpha=False)  # Remove alpha channel for better OCR
                 img_data = pix.tobytes("png")
 
                 # Process with OCR
@@ -326,7 +439,10 @@ async def ocr_document(
         total_pages = 1
 
         # Process based on content type
-        if document.content_type == 'application/pdf':
+        # Use mime_type from database model instead of content_type
+        mime_type = document.mime_type or "application/octet-stream"
+
+        if mime_type == 'application/pdf':
             results = extract_text_from_pdf(
                 document.file_path,
                 ocr_request.language_hints,
@@ -334,7 +450,7 @@ async def ocr_document(
             )
             total_pages = len(results)
 
-        elif document.content_type.startswith('image/'):
+        elif mime_type.startswith('image/'):
             # Read image file
             with open(document.file_path, 'rb') as f:
                 image_data = f.read()
@@ -352,7 +468,7 @@ async def ocr_document(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail={
                     "error": "UNSUPPORTED_FORMAT",
-                    "message": f"OCR not supported for content type: {document.content_type}"
+                    "message": f"OCR not supported for content type: {mime_type}"
                 }
             )
 
@@ -542,24 +658,62 @@ async def upload_and_extract(
     start_time = datetime.utcnow()
 
     try:
-        # Validate file type
-        if not file.content_type.startswith('image/'):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail={
-                    "error": "INVALID_FILE_TYPE",
-                    "message": "Only image files are supported for direct OCR"
-                }
-            )
-
         # Read file content
         file_content = await file.read()
 
         # Parse language hints
         lang_list = [lang.strip() for lang in language_hints.split(',')]
 
-        # Process with OCR
-        result = extract_text_from_image(file_content, lang_list, preprocess)
+        # Process based on file type
+        if file.content_type.startswith('image/'):
+            # Process image with OCR
+            result = extract_text_from_image(file_content, lang_list, preprocess)
+        elif file.content_type == 'application/pdf':
+            # Process PDF
+            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
+                tmp_file.write(file_content)
+                tmp_file_path = tmp_file.name
+            
+            try:
+                # Extract text from PDF
+                pdf_results = extract_text_from_pdf(tmp_file_path, lang_list, preprocess)
+                
+                # Combine results from all pages
+                all_text = []
+                all_regions = []
+                confidences = []
+                
+                for page_result in pdf_results:
+                    all_text.append(page_result.extracted_text)
+                    all_regions.extend(page_result.text_regions)
+                    if page_result.confidence_average > 0:
+                        confidences.append(page_result.confidence_average)
+                
+                avg_confidence = sum(confidences) / len(confidences) if confidences else 1.0
+                
+                result = OCRResult(
+                    extracted_text="\n\n".join(all_text),
+                    text_regions=all_regions,
+                    page_number=None,
+                    language_detected=lang_list,
+                    confidence_average=avg_confidence,
+                    processing_metadata={
+                        "file_type": "pdf",
+                        "total_pages": len(pdf_results),
+                        "extraction_method": "pdf_processing"
+                    }
+                )
+            finally:
+                # Clean up temp file
+                os.unlink(tmp_file_path)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "error": "INVALID_FILE_TYPE",
+                    "message": f"Unsupported file type: {file.content_type}. Only images and PDFs are supported."
+                }
+            )
 
         # Calculate processing time
         processing_time = int((datetime.utcnow() - start_time).total_seconds() * 1000)
