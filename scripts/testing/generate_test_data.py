@@ -39,8 +39,8 @@ def create_sample_bank_statement_pdf():
         bank_statement_data = {
             "bank_name": "Emirates NBD Bank",
             "account_holder": "Ahmed Ali Hassan",
-            "account_number": "1234567890123456",
-            "emirates_id": "784-1990-1234567-8",
+            "account_number": "9876543210987654",
+            "emirates_id": "784-1985-9876543-2",
             "statement_period": "November 2024",
             "opening_balance": 15250.00,
             "closing_balance": 22292.75,
@@ -168,8 +168,8 @@ ACCOUNT STATEMENT
 =====================================
 
 Account Holder: Ahmed Ali Hassan
-Account Number: 1234567890123456
-Emirates ID: 784-1990-1234567-8
+Account Number: 9876543210987654
+Emirates ID: 784-1985-9876543-2
 Statement Period: November 2024
 
 Opening Balance: AED 15,250.00
@@ -249,8 +249,8 @@ def create_sample_emirates_id_image():
         # Personal information
         draw.text((50, 150), "Name: Ahmed Ali Hassan", fill='black', font=font_medium)
         draw.text((50, 180), "Nationality: United Arab Emirates", fill='black', font=font_small)
-        draw.text((50, 210), "Identity No: 784-1990-1234567-8", fill='black', font=font_medium)
-        draw.text((50, 240), "Date of Birth: 15/03/1990", fill='black', font=font_small)
+        draw.text((50, 210), "Identity No: 784-1985-9876543-2", fill='black', font=font_medium)
+        draw.text((50, 240), "Date of Birth: 01/01/1990", fill='black', font=font_small)
         draw.text((50, 270), "Sex: M", fill='black', font=font_small)
         draw.text((50, 300), "Date of Issue: 12/01/2020", fill='black', font=font_small)
         draw.text((50, 330), "Date of Expiry: 11/01/2030", fill='black', font=font_small)
@@ -292,8 +292,8 @@ IDENTITY CARD
 
 Name: Ahmed Ali Hassan
 Nationality: United Arab Emirates
-Identity No: 784-1990-1234567-8
-Date of Birth: 15/03/1990
+Identity No: 784-1985-9876543-2
+Date of Birth: 01/01/1990
 Sex: M
 Date of Issue: 12/01/2020
 Date of Expiry: 11/01/2030
@@ -353,7 +353,7 @@ def create_sample_applications():
         {
             "name": "Standard Case - Should be Approved",
             "full_name": "Ahmed Ali Hassan",
-            "emirates_id": "784-1990-1234567-8",
+            "emirates_id": "784-1985-9876543-2",
             "phone": "+971501234567",
             "email": "ahmed@example.com",
             "monthly_income": 3200,

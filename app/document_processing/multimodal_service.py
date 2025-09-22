@@ -352,7 +352,7 @@ Extract the identity data and return as JSON format only."""
         """Get fallback Emirates ID analysis for testing"""
         return {
             'full_name': 'Test User Name',
-            'emirates_id_number': '784-1990-1234567-8',
+            'emirates_id_number': '784-1985-9876543-2',
             'nationality': 'United Arab Emirates',
             'date_of_birth': '01/01/1990',
             'expiry_date': '01/01/2030',

@@ -207,7 +207,7 @@ class OCRService:
             Personal Banking
             ACCOUNT STATEMENT
 
-            Account Holder: Muaaz Bin Saeed
+            Account Holder: John Ahmed Smith
             Account Number: 1013-456789-01
             Statement Period: 01 Nov 2024 to 30 Nov 2024
 
@@ -235,13 +235,13 @@ class OCRService:
             UNITED ARAB EMIRATES
             IDENTITY CARD
 
-            Name: Muaaz Bin Saeed
+            Name: John Ahmed Smith
             Nationality: United Arab Emirates
-            Identity No: 784-1995-1234567-8
-            Date of Birth: 15/03/1995
+            Identity No: 784-1987-7777888-9
+            Date of Birth: 01/01/1990
             Sex: M
             Date of Issue: 12/01/2022
-            Date of Expiry: 11/01/2032
+            Date of Expiry: 01/01/2030
             """
 
         return OCRResult(

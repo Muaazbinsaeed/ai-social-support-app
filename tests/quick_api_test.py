@@ -318,7 +318,7 @@ def run_all_tests():
     if auth_setup:
         headers = get_auth_headers()
         test_endpoint("workflow", "POST", "/workflow/start-application",
-                     json={"full_name": "Test User", "emirates_id": "784-1990-1234567-8",
+                     json={"full_name": "Test User", "emirates_id": "784-1985-9876543-2",
                            "phone": "+971501234567", "email": "test@example.com"},
                      headers={**headers, "Content-Type": "application/json"})
 

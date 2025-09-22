@@ -238,7 +238,7 @@ class TestCompleteUserWorkflow(IntegrationTestSuite):
         try:
             application_data = {
                 "full_name": "Integration Test Applicant",
-                "emirates_id": "784-1990-1234567-8",
+                "emirates_id": "784-1985-9876543-2",
                 "phone": "+971501234567",
                 "email": "integration@test.com"
             }

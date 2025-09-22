@@ -106,7 +106,7 @@ def generate_bank_statement_pdf(output_path: str, account_holder: str = "Ahmed A
         c.setFont("Helvetica-Bold", 10)
         c.drawString(50, height - 140, "Account Number:")
         c.setFont("Helvetica", 10)
-        c.drawString(150, height - 140, "1234567890123456")
+        c.drawString(150, height - 140, "9876543210987654")
 
         c.setFont("Helvetica-Bold", 10)
         c.drawString(50, height - 160, "Statement Period:")
@@ -229,7 +229,7 @@ def generate_emirates_id_image(output_path: str, name: str = "Ahmed Al-Mansouri"
 
         # ID Number
         draw.text((30, y_offset), "ID Number:", font=text_font, fill='black')
-        draw.text((150, y_offset), "784-1990-1234567-8", font=text_font, fill='blue')
+        draw.text((150, y_offset), "784-1985-9876543-2", font=text_font, fill='blue')
 
         # Name
         y_offset += 40

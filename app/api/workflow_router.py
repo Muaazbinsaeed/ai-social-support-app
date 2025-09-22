@@ -971,10 +971,10 @@ def process_application(
 United Arab Emirates
 Emirates ID Card
 Name: AHMED ALI HASSAN
-ID Number: 784-1990-1234567-8
-Date of Birth: 15/03/1990
+ID Number: 784-1985-9876543-2
+Date of Birth: 01/01/1990
 Nationality: UAE
-Expiry: 15/03/2025
+Expiry: 01/01/2030
 Gender: Male
 Card Number: 123-4567-8901234-5
                         """.strip()

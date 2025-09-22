@@ -242,9 +242,9 @@ Make an eligibility decision and provide reasoning. Return as JSON format."""
         elif document_type == "emirates_id":
             return {
                 "full_name": "Ahmed Ali Hassan",
-                "id_number": "784-1990-1234567-8",
+                "id_number": "784-1985-9876543-2",
                 "nationality": "United Arab Emirates",
-                "date_of_birth": "15/03/1990",
+                "date_of_birth": "01/01/1990",
                 "expiry_date": "11/01/2030",
                 "confidence": 0.6,
                 "fallback": True

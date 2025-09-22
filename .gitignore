@@ -187,3 +187,11 @@ coverage.xml
 debug_*.py
 quick_*.py
 output.md
+
+# Personal documents (exclude from Git)
+docs/EmirateIDFront.jpg
+docs/BankStatement.pdf
+docs/*Muaaz*
+**/CV_Muaaz_*
+**/*Personal*
+**/*personal*

@@ -275,7 +275,7 @@ def show_editable_form(is_existing: bool, application_id: str = None):
             "Emirates ID *",
             value=current_emirates_id,
             placeholder="784-YYYY-XXXXXXX-X",
-            help="Format: 784-YYYY-XXXXXXX-X (e.g., 784-1990-1234567-8)",
+            help="Format: 784-YYYY-XXXXXXX-X (e.g., 784-1985-9876543-2)",
             key=f"emirates_id_{form_key}"
         )
 
@@ -336,7 +336,7 @@ def show_editable_form(is_existing: bool, application_id: str = None):
             st.markdown("""
             **Sample Information:**
             - **Full Name:** Ahmed Ali Hassan
-            - **Emirates ID:** 784-1990-1234567-8
+            - **Emirates ID:** 784-1985-9876543-2
             - **Phone:** +971501234567
             - **Email:** ahmed@example.com
             """)

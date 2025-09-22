@@ -72,8 +72,8 @@ This enterprise-grade system delivers a **complete, working government AI workfl
 - **✅ PDF Support**: Complete multi-page PDF processing with text extraction
 - **✅ Performance Optimized**: 5-8 seconds for images, 40-45 seconds for PDFs
 - **✅ Data Extraction Examples**:
-  - **Emirates ID**: Name (Muaaz Bin Saeed), DOB (04/02/1995), Nationality (Pakistan)
-  - **Bank Statement**: Account (0252-1006968267), Transactions, Balances
+  - **Emirates ID**: Name (John Ahmed Smith), DOB (01/01/1990), Nationality (UAE)
+  - **Bank Statement**: Account (9876-5432109876), Transactions, Balances
 - **✅ Intelligent Processing**: PSM 3 (automatic) with PSM 6 (uniform) fallback
 - **✅ Enterprise Ready**: Production-tested with real customer documents
 
@@ -1009,7 +1009,7 @@ curl -X POST http://localhost:8000/ocr/documents/{document_id} \
 curl -X POST http://localhost:8000/workflow/start-application \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
-  -d '{"full_name":"John Doe","emirates_id":"784-1234-1234567-1","phone":"+971501234567","email":"john@example.com"}'
+  -d '{"full_name":"John Doe","emirates_id":"784-1987-7777888-9","phone":"+971501234567","email":"john@example.com"}'
 
 # Check workflow status
 curl -H "Authorization: Bearer <token>" \

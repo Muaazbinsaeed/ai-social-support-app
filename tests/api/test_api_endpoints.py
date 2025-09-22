@@ -460,7 +460,7 @@ class TestWorkflowEndpoints(APITestSuite):
 
             application_data = {
                 "full_name": "Test Applicant",
-                "emirates_id": "784-1990-1234567-8",
+                "emirates_id": "784-1985-9876543-2",
                 "phone": "+971501234567",
                 "email": "applicant@test.com"
             }

@@ -295,7 +295,7 @@ def test_authenticated_endpoints():
     test_name = "Create Application Test"
     input_data = {
         "full_name": "Ahmed Al-Mansouri",
-        "emirates_id": "784-1990-1234567-8",
+        "emirates_id": "784-1985-9876543-2",
         "phone": "+971501234567",
         "email": "ahmed@example.com"
     }
@@ -424,7 +424,7 @@ def test_end_to_end_flow():
         },
         "application_data": {
             "full_name": "E2E Test Application",
-            "emirates_id": "784-1990-7654321-5",
+            "emirates_id": "784-1988-5555666-7",
             "phone": "+971509876543",
             "email": "e2eapp@example.com"
         }

@@ -89,7 +89,7 @@ setup_test_user() {
             "password": "SecurePass123",
             "full_name": "API Test User",
             "phone": "+971501234567",
-            "emirates_id": "784-1995-1234567-8"
+            "emirates_id": "784-1987-7777888-9"
         }')
 
     if echo "$REGISTER_RESPONSE" | jq -e '.id' > /dev/null 2>&1; then
@@ -174,7 +174,7 @@ workflow_tests() {
         -H "Content-Type: application/json" \
         -d '{
             "full_name": "API Test User",
-            "emirates_id": "784-1995-1234567-8",
+            "emirates_id": "784-1987-7777888-9",
             "phone": "+971501234567",
             "email": "'$TEST_EMAIL'"
         }')

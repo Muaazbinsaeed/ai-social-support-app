@@ -18,7 +18,7 @@ NC='\033[0m'
 
 # Test documents (update paths as needed)
 EMIRATES_ID_PATH="/Users/muaazbinsaeed/Downloads/Project/AI-social/docs/EmirateIDFront.jpg"
-BANK_STATEMENT_PATH="/Users/muaazbinsaeed/Downloads/Project/AI-social/docs/Bank Muaaz Alfalah Statement.pdf"
+BANK_STATEMENT_PATH="/Users/muaazbinsaeed/Downloads/Project/AI-social/docs/Sample_Bank_Statement.pdf"
 
 # Check if test documents exist
 check_documents() {
@@ -60,7 +60,7 @@ setup_user() {
             "password": "SecurePass123",
             "full_name": "E2E Test User",
             "phone": "+971501234567",
-            "emirates_id": "784-1995-1234567-8"
+            "emirates_id": "784-1987-7777888-9"
         }')
 
     USER_ID=$(echo "$REGISTER_RESPONSE" | jq -r '.id')
@@ -101,7 +101,7 @@ start_application() {
         -H "Content-Type: application/json" \
         -d '{
             "full_name": "E2E Test User",
-            "emirates_id": "784-1995-1234567-8",
+            "emirates_id": "784-1987-7777888-9",
             "phone": "+971501234567",
             "email": "'$EMAIL'"
         }')
