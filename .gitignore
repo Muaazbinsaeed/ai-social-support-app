@@ -192,6 +192,18 @@ output.md
 docs/EmirateIDFront.jpg
 docs/BankStatement.pdf
 docs/*Muaaz*
+docs/*muaaz*
 **/CV_Muaaz_*
+**/CV_muaaz_*
 **/*Personal*
 **/*personal*
+**/*Alfalah*
+**/*alfalah*
+**/*EmirateID*
+**/*emirateid*
+**/*BankStatement*
+**/*bankstatement*
+# Any files with personal identifiers
+**/*784-*-*-*
+**/*Muaaz*
+**/*muaaz*
