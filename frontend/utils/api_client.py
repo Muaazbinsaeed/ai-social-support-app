@@ -130,6 +130,18 @@ class APIClient:
         except Exception as e:
             return {"error": f"Connection error: {str(e)}"}
 
+    def logout(self) -> Dict[str, Any]:
+        """Logout current user"""
+        try:
+            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
+                response = client.post(
+                    f"{self.base_url}/auth/logout",
+                    headers=self._get_headers()
+                )
+                return self._handle_response(response)
+        except Exception as e:
+            return {"error": f"Connection error: {str(e)}"}
+
     def create_application(self, application_data: Dict[str, Any]) -> Dict[str, Any]:
         """Create new application"""
         try:
@@ -385,6 +397,149 @@ class APIClient:
                 return self._handle_response(response)
         except Exception as e:
             return {"error": f"Connection error: {str(e)}"}
+
+    # OCR and Document Processing Methods
+
+    def ocr_document(self, document_id: str) -> Dict[str, Any]:
+        """Process a document with OCR"""
+        try:
+            with httpx.Client(timeout=60.0, follow_redirects=True) as client:  # Longer timeout for OCR
+                response = client.post(
+                    f"{self.base_url}/ocr/documents/{document_id}",
+                    headers=self._get_headers()
+                )
+                return self._handle_response(response)
+        except Exception as e:
+            return {"error": f"OCR processing error: {str(e)}"}
+
+    def direct_ocr(self, file_content: bytes, file_name: str, document_type: str) -> Dict[str, Any]:
+        """Perform direct OCR on a file without saving to database"""
+        try:
+            import base64
+
+            # Determine file type based on filename extension
+            file_extension = file_name.lower().split('.')[-1] if '.' in file_name else ''
+
+            if file_extension == 'pdf':
+                # Use upload-and-extract endpoint for PDFs
+                return self.upload_and_extract(file_content, file_name, document_type)
+            else:
+                # Use direct endpoint for images
+                # Encode file content as base64
+                image_data_b64 = base64.b64encode(file_content).decode('utf-8')
+
+                # Prepare JSON payload
+                payload = {
+                    "image_data": image_data_b64,
+                    "language_hints": ["en", "ar"],
+                    "preprocess": True
+                }
+
+                with httpx.Client(timeout=60.0, follow_redirects=True) as client:
+                    response = client.post(
+                        f"{self.base_url}/ocr/direct",
+                        json=payload,
+                        headers=self._get_headers()
+                    )
+                    result = self._handle_response(response)
+
+                    # Extract the result from the nested structure
+                    if 'error' not in result and 'result' in result:
+                        # Flatten the response to match expected format
+                        ocr_result = result['result']
+                        return {
+                            'extracted_text': ocr_result.get('extracted_text', ''),
+                            'confidence_average': ocr_result.get('confidence_average', 0),
+                            'text_regions': ocr_result.get('text_regions', []),
+                            'language_detected': ocr_result.get('language_detected', []),
+                            'processing_time_ms': result.get('processing_time_ms', 0),
+                            'ocr_id': result.get('ocr_id', ''),
+                            'timestamp': result.get('timestamp', '')
+                        }
+
+                    return result
+        except Exception as e:
+            return {"error": f"Direct OCR error: {str(e)}"}
+
+    def upload_and_extract(self, file_content: bytes, file_name: str, document_type: str) -> Dict[str, Any]:
+        """Upload a file and immediately extract text"""
+        try:
+            files = {"file": (file_name, file_content)}
+            data = {"language_hints": "en,ar", "preprocess": "true"}
+
+            with httpx.Client(timeout=60.0, follow_redirects=True) as client:
+                response = client.post(
+                    f"{self.base_url}/ocr/upload-and-extract",
+                    files=files,
+                    data=data,
+                    headers={"Authorization": f"Bearer {st.session_state.get('access_token', '')}"}
+                )
+                result = self._handle_response(response)
+
+                # Extract the result from the nested structure
+                if 'error' not in result and 'result' in result:
+                    # Flatten the response to match expected format
+                    ocr_result = result['result']
+                    return {
+                        'extracted_text': ocr_result.get('extracted_text', ''),
+                        'confidence_average': ocr_result.get('confidence_average', 0),
+                        'text_regions': ocr_result.get('text_regions', []),
+                        'language_detected': ocr_result.get('language_detected', []),
+                        'processing_time_ms': result.get('processing_time_ms', 0),
+                        'ocr_id': result.get('ocr_id', ''),
+                        'timestamp': result.get('timestamp', '')
+                    }
+
+                return result
+        except Exception as e:
+            return {"error": f"Upload and extract error: {str(e)}"}
+
+    def get_ocr_health(self) -> Dict[str, Any]:
+        """Check OCR service health"""
+        try:
+            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
+                response = client.get(f"{self.base_url}/ocr/health")
+                return self._handle_response(response)
+        except Exception as e:
+            return {"error": f"OCR health check error: {str(e)}"}
+
+    # Analysis endpoints for multimodal processing
+
+    def analyze_document(self, document_id: str) -> Dict[str, Any]:
+        """Analyze a document with AI"""
+        try:
+            with httpx.Client(timeout=60.0, follow_redirects=True) as client:
+                response = client.post(
+                    f"{self.base_url}/analysis/documents/{document_id}",
+                    headers=self._get_headers()
+                )
+                return self._handle_response(response)
+        except Exception as e:
+            return {"error": f"Document analysis error: {str(e)}"}
+
+    def get_analysis_status(self, document_id: str) -> Dict[str, Any]:
+        """Get analysis status for a document"""
+        try:
+            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
+                response = client.get(
+                    f"{self.base_url}/analysis/documents/{document_id}/status",
+                    headers=self._get_headers()
+                )
+                return self._handle_response(response)
+        except Exception as e:
+            return {"error": f"Analysis status error: {str(e)}"}
+
+    def get_enhanced_processing_status(self, application_id: str) -> Dict[str, Any]:
+        """Get enhanced processing status with detailed OCR and analysis info"""
+        try:
+            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
+                response = client.get(
+                    f"{self.base_url}/workflow/status-enhanced/{application_id}",
+                    headers=self._get_headers()
+                )
+                return self._handle_response(response)
+        except Exception as e:
+            return {"error": f"Enhanced status error: {str(e)}"}
 
 
 # Global API client instance

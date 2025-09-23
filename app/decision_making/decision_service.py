@@ -4,7 +4,7 @@ Decision making business logic service
 
 import time
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from sqlalchemy.orm import Session
 from decimal import Decimal
 import json

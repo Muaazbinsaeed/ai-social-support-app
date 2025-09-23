@@ -23,7 +23,7 @@ def show_processing_status():
     with col1:
         st.markdown("### 🔄 Document Processing Status")
     with col2:
-        if st.button("🔄 Refresh Status", use_container_width=True, key="refresh_processing_status"):
+        if st.button("🔄 Refresh Status", width='stretch', key="refresh_processing_status"):
             st.rerun()
     
     # Get detailed processing status
@@ -101,10 +101,14 @@ def show_document_processing(documents: list):
                 if confidence > 0:
                     st.metric("OCR Confidence", f"{confidence:.1%}")
             
-            # OCR Text Preview
+            # OCR Text Preview with enhanced display
             if doc.get('ocr_text'):
                 st.markdown("#### 📝 Extracted Text Preview")
-                with st.container():
+
+                # Tabs for different views
+                tab1, tab2 = st.tabs(["📄 Text Preview", "📊 Text Stats"])
+
+                with tab1:
                     st.text_area(
                         "OCR Output",
                         value=doc['ocr_text'],
@@ -112,6 +116,36 @@ def show_document_processing(documents: list):
                         disabled=True,
                         key=f"ocr_text_{doc['document_id']}"
                     )
+
+                    # Quick actions
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        if st.button("📋 Copy Text", key=f"copy_text_{doc['document_id']}", width='stretch'):
+                            st.write("📋 Text copied to display above")
+                    with col2:
+                        if st.button("🔄 Re-process OCR", key=f"reprocess_{doc['document_id']}", width='stretch'):
+                            reprocess_document_ocr(doc.get('document_id'))
+                    with col3:
+                        if st.button("🔍 Analyze with AI", key=f"analyze_{doc['document_id']}", width='stretch'):
+                            analyze_document_ai(doc.get('document_id'))
+
+                with tab2:
+                    # Text statistics
+                    text = doc['ocr_text']
+                    col1, col2, col3, col4 = st.columns(4)
+                    with col1:
+                        st.metric("Characters", len(text))
+                    with col2:
+                        st.metric("Words", len(text.split()))
+                    with col3:
+                        st.metric("Lines", len(text.split('\n')))
+                    with col4:
+                        confidence = doc.get('ocr_confidence', 0)
+                        st.metric("Quality", f"{confidence:.1%}" if confidence > 0 else "N/A")
+            elif doc.get('ocr_status') == 'completed':
+                st.warning("⚠️ OCR completed but no text extracted. Document may be empty or processing failed.")
+                if st.button("🔄 Retry OCR", key=f"retry_empty_{doc['document_id']}", width='stretch'):
+                    reprocess_document_ocr(doc.get('document_id'))
             
             # Extracted Data
             if doc.get('extracted_data'):
@@ -221,3 +255,41 @@ def get_ocr_status_color(status: str) -> str:
         'failed': '#F44336'
     }
     return ocr_colors.get(status, '#808080')
+
+
+def reprocess_document_ocr(document_id: str):
+    """Reprocess a document with OCR"""
+    if not document_id:
+        st.error("❌ No document ID provided")
+        return
+
+    with st.spinner("Reprocessing document with OCR..."):
+        result = api_client.ocr_document(document_id)
+
+    if 'error' in result:
+        st.error(f"❌ Failed to reprocess: {result['error']}")
+    else:
+        st.success("✅ OCR reprocessing started!")
+        st.info("🔄 Please refresh the page in a few moments to see the results.")
+        # Auto-refresh after a delay
+        st.rerun()
+
+
+def analyze_document_ai(document_id: str):
+    """Analyze a document with AI"""
+    if not document_id:
+        st.error("❌ No document ID provided")
+        return
+
+    with st.spinner("Analyzing document with AI..."):
+        result = api_client.analyze_document(document_id)
+
+    if 'error' in result:
+        st.error(f"❌ Failed to analyze: {result['error']}")
+    else:
+        st.success("✅ AI analysis started!")
+        if result.get('analysis'):
+            st.markdown("#### 🤖 AI Analysis Results")
+            st.write(result['analysis'])
+        st.info("🔄 Please refresh the page to see updated results.")
+        st.rerun()

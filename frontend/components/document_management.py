@@ -266,23 +266,23 @@ def show_document_card(doc: Dict[str, Any], doc_type: str, doc_manager: Document
             
             with col_a:
                 if can_edit:
-                    if st.button("✏️ Replace", key=f"edit_{doc_type}", use_container_width=True):
+                    if st.button("✏️ Replace", key=f"edit_{doc_type}", width='stretch'):
                         st.session_state[f"replacing_{doc_type}"] = True
                         st.rerun()
                 
-                if st.button("👁️ View", key=f"view_{doc_type}", use_container_width=True):
+                if st.button("👁️ View", key=f"view_{doc_type}", width='stretch'):
                     st.session_state[f"show_preview_{doc_type}"] = True
                     st.rerun()
             
             with col_b:
                 if status in ['processed', 'processing']:
-                    if st.button("🔄 Reset", key=f"reset_{doc_type}", use_container_width=True):
+                    if st.button("🔄 Reset", key=f"reset_{doc_type}", width='stretch'):
                         if doc_manager.reset_document_status(doc_type):
                             st.success(f"✅ {label} status reset. You can now replace it.")
                             st.rerun()
                 
                 if can_edit:
-                    if st.button("🗑️ Delete", key=f"delete_{doc_type}", use_container_width=True):
+                    if st.button("🗑️ Delete", key=f"delete_{doc_type}", width='stretch'):
                         if st.session_state.get(f"confirm_delete_{doc_type}"):
                             if doc_manager.delete_document(doc_type):
                                 st.success(f"✅ {label} deleted successfully!")
@@ -306,7 +306,7 @@ def show_document_card(doc: Dict[str, Any], doc_type: str, doc_manager: Document
         col1, col2 = st.columns(2)
         
         with col1:
-            if st.button("✅ Confirm Replace", key=f"confirm_replace_{doc_type}", use_container_width=True):
+            if st.button("✅ Confirm Replace", key=f"confirm_replace_{doc_type}", width='stretch'):
                 if new_file:
                     file_data = new_file.read()
                     if validate_document(file_data, new_file.name, doc_type):
@@ -318,7 +318,7 @@ def show_document_card(doc: Dict[str, Any], doc_type: str, doc_manager: Document
                     st.error("Please select a file to upload")
         
         with col2:
-            if st.button("❌ Cancel", key=f"cancel_replace_{doc_type}", use_container_width=True):
+            if st.button("❌ Cancel", key=f"cancel_replace_{doc_type}", width='stretch'):
                 st.session_state[f"replacing_{doc_type}"] = False
                 st.rerun()
 
@@ -349,19 +349,31 @@ def show_upload_interface(doc_type: str, doc_manager: DocumentManager, allowed_t
             if uploaded_file.type == "application/pdf":
                 st.info(f"📄 PDF Document: {uploaded_file.name} ({len(file_data)/1024:.1f} KB)")
             else:
-                st.image(file_data, caption=uploaded_file.name, use_container_width=True)
+                st.image(file_data, caption=uploaded_file.name, width='stretch')
             
             col1, col2 = st.columns(2)
             
             with col1:
-                if st.button(f"✅ Save {label}", key=f"save_{doc_type}", type="primary", use_container_width=True):
+                if st.button(f"✅ Save {label}", key=f"save_{doc_type}", type="primary", width='stretch'):
                     if doc_manager.add_document(doc_type, file_data, uploaded_file.name):
                         st.success(f"✅ {label} uploaded successfully!")
+
+                        # Auto-preview OCR option
+                        if st.session_state.get('auto_ocr_preview', False):
+                            with st.spinner("🔍 Running automatic OCR preview..."):
+                                ocr_result = api_client.direct_ocr(file_data, uploaded_file.name, doc_type)
+                                if 'error' not in ocr_result:
+                                    st.info(f"🎯 OCR Preview: Found {len(ocr_result.get('extracted_text', ''))} characters with {ocr_result.get('confidence_average', 0):.1%} confidence")
+
                         st.rerun()
-            
+
             with col2:
-                if st.button("❌ Cancel", key=f"cancel_upload_{doc_type}", use_container_width=True):
+                if st.button("❌ Cancel", key=f"cancel_upload_{doc_type}", width='stretch'):
                     st.rerun()
+
+            # Auto-OCR option
+            st.checkbox("🔍 Auto-run OCR preview after upload", key='auto_ocr_preview',
+                       help="Automatically run OCR analysis after successful upload for quick verification")
 
 
 def validate_document(file_data: bytes, filename: str, doc_type: str) -> bool:
@@ -428,7 +440,7 @@ def show_document_preview(doc: Dict[str, Any], doc_type: str):
             else:
                 # Show image preview
                 try:
-                    st.image(doc_data, caption=doc['filename'], use_container_width=True)
+                    st.image(doc_data, caption=doc['filename'], width='stretch')
                 except Exception as e:
                     st.error(f"Cannot display image: {str(e)}")
                     # Offer download as fallback
@@ -497,12 +509,17 @@ def show_document_summary(doc_manager: DocumentManager):
             
             if not both_submitted:
                 # Show submit button for newly uploaded documents
-                if st.button("💾 Submit Documents", type="primary", use_container_width=True):
+                if st.button("💾 Submit Documents", type="primary", width='stretch'):
                     submit_documents_to_backend(current_app_id, doc_manager)
             elif not both_processed:
                 # Show process button if documents are submitted but not processed
-                if st.button("🚀 Process Documents", type="primary", use_container_width=True):
-                    process_documents(current_app_id, doc_manager)
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("🚀 Process Documents", type="primary", width='stretch'):
+                        process_documents(current_app_id, doc_manager)
+                with col2:
+                    if st.button("🔍 Quick OCR Preview", width='stretch'):
+                        show_quick_ocr_preview(doc_manager)
             else:
                 # Documents are already processed
                 st.success("✅ Documents processed successfully!")
@@ -578,32 +595,102 @@ def submit_documents_to_backend(app_id: str, doc_manager: DocumentManager):
 
 
 def process_documents(app_id: str, doc_manager: DocumentManager):
-    """Start processing submitted documents"""
+    """Start processing submitted documents with OCR integration"""
     bank_doc = doc_manager.get_document('bank_statement')
     emirates_doc = doc_manager.get_document('emirates_id')
-    
+
     if not bank_doc or not emirates_doc:
         st.error("❌ No documents to process")
         return
-    
+
     if bank_doc.get('status') != 'submitted' or emirates_doc.get('status') != 'submitted':
         st.warning("⚠️ Please submit documents first before processing")
         return
-    
+
+    # Enhanced processing with OCR preview option
+    st.markdown("### 🚀 Document Processing Options")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button("⚡ Quick Process", type="primary", width='stretch', help="Start processing immediately"):
+            _start_document_processing(app_id, doc_manager, skip_ocr_preview=True)
+
+    with col2:
+        if st.button("🔍 Process with OCR Preview", width='stretch', help="Run OCR analysis first, then process"):
+            _start_document_processing(app_id, doc_manager, skip_ocr_preview=False)
+
+
+def _start_document_processing(app_id: str, doc_manager: DocumentManager, skip_ocr_preview: bool = True):
+    """Internal function to start document processing"""
+    bank_doc = doc_manager.get_document('bank_statement')
+    emirates_doc = doc_manager.get_document('emirates_id')
+
+    if not skip_ocr_preview:
+        st.markdown("#### 🔍 OCR Analysis Preview")
+
+        # Run OCR on both documents for preview
+        docs_to_process = [
+            ('bank_statement', bank_doc, '🏦 Bank Statement'),
+            ('emirates_id', emirates_doc, '🆔 Emirates ID')
+        ]
+
+        ocr_results = {}
+        for doc_type, doc, label in docs_to_process:
+            file_data = doc.get('data')
+            if file_data:
+                with st.spinner(f"Analyzing {label}..."):
+                    ocr_result = api_client.direct_ocr(file_data, doc['filename'], doc_type)
+                    if 'error' not in ocr_result:
+                        ocr_results[doc_type] = ocr_result
+                        with st.expander(f"📄 {label} OCR Results", expanded=False):
+                            col1, col2, col3 = st.columns(3)
+                            with col1:
+                                st.metric("Confidence", f"{ocr_result.get('confidence_average', 0):.1%}")
+                            with col2:
+                                st.metric("Text Length", len(ocr_result.get('extracted_text', '')))
+                            with col3:
+                                st.metric("Processing Time", f"{ocr_result.get('processing_time_ms', 0)}ms")
+
+                            if ocr_result.get('extracted_text'):
+                                st.text_area("Extracted Text",
+                                           value=ocr_result['extracted_text'][:500] + ("..." if len(ocr_result['extracted_text']) > 500 else ""),
+                                           height=100, disabled=True)
+                    else:
+                        st.error(f"❌ OCR failed for {label}: {ocr_result['error']}")
+
+        st.markdown("---")
+
+        if ocr_results:
+            st.success(f"✅ OCR analysis completed for {len(ocr_results)} documents")
+
+            if st.button("🚀 Continue with Processing", type="primary", width='stretch'):
+                _execute_backend_processing(app_id, doc_manager)
+        else:
+            st.error("❌ OCR analysis failed. Cannot proceed with processing.")
+    else:
+        _execute_backend_processing(app_id, doc_manager)
+
+
+def _execute_backend_processing(app_id: str, doc_manager: DocumentManager):
+    """Execute the backend processing workflow"""
     with st.spinner("🔄 Starting document processing..."):
         # Start processing
         process_result = api_client.process_application(app_id)
-        
+
         if 'error' not in process_result:
             # Update status to processing
+            bank_doc = doc_manager.get_document('bank_statement')
+            emirates_doc = doc_manager.get_document('emirates_id')
+
             bank_doc['status'] = 'processing'
             emirates_doc['status'] = 'processing'
             doc_manager.update_document_metadata('bank_statement', {'status': 'processing'})
             doc_manager.update_document_metadata('emirates_id', {'status': 'processing'})
-            
+
             st.success("🚀 Document processing started!")
-            st.info("⏳ Processing may take a few minutes. You can check the status panel for updates.")
-            
+            st.info("⏳ Processing may take a few minutes. Check the Processing Status panel for real-time updates.")
+
             # Save to session
             save_session_to_cookies()
             st.rerun()
@@ -647,3 +734,124 @@ def show_document_requirements():
     
     st.markdown("---")
     st.info("💡 **Tip:** Complete and submit your application form in the left panel to enable document upload.")
+
+
+def show_quick_ocr_preview(doc_manager: DocumentManager):
+    """Show quick OCR preview for uploaded documents"""
+    st.markdown("### 🔍 Quick OCR Preview")
+
+    # Select document to preview
+    doc_type = st.selectbox(
+        "Select document to preview:",
+        ["bank_statement", "emirates_id"],
+        format_func=lambda x: "📄 Bank Statement" if x == "bank_statement" else "🆔 Emirates ID"
+    )
+
+    doc = doc_manager.get_document(doc_type)
+    if not doc:
+        st.warning(f"⚠️ No {doc_type.replace('_', ' ')} uploaded yet.")
+        return
+
+    # Check if document data is available
+    file_data = doc.get('data')
+    if not file_data and doc.get('document_id'):
+        st.info("📥 Document is stored on server. Loading for OCR preview...")
+        with st.spinner("Loading document from server..."):
+            download_result = api_client.download_document(doc['document_id'])
+            if 'error' not in download_result and download_result.get('data'):
+                import base64
+                file_data = base64.b64decode(download_result['data'])
+                # Cache in session for future use
+                doc['data'] = file_data
+            else:
+                st.error(f"❌ Failed to load document: {download_result.get('error', 'Unknown error')}")
+                return
+
+    if not file_data:
+        st.error("❌ Document data not available. Please re-upload the document.")
+        return
+
+    if st.button(f"🚀 Run OCR on {doc_type.replace('_', ' ').title()}", width='stretch'):
+        with st.spinner("Processing document with OCR..."):
+            filename = doc['filename']
+
+            # Use direct OCR API for preview
+            result = api_client.direct_ocr(file_data, filename, doc_type)
+
+        if 'error' in result:
+            st.error(f"❌ OCR failed: {result['error']}")
+        else:
+            st.success("✅ OCR processing completed!")
+
+            # Display results
+            if result.get('extracted_text'):
+                st.markdown("#### 📝 Extracted Text")
+                with st.expander("View OCR Text", expanded=True):
+                    st.text_area(
+                        "OCR Result",
+                        value=result['extracted_text'],
+                        height=200,
+                        disabled=True
+                    )
+
+                    # Quick stats
+                    text = result['extracted_text']
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Characters", len(text))
+                    with col2:
+                        st.metric("Words", len(text.split()))
+                    with col3:
+                        st.metric("Lines", len(text.split('\n')))
+
+            if result.get('extracted_data'):
+                st.markdown("#### 🔍 Structured Data")
+                with st.expander("View Extracted Data", expanded=True):
+                    if doc_type == 'emirates_id':
+                        display_emirates_preview(result['extracted_data'])
+                    elif doc_type == 'bank_statement':
+                        display_bank_preview(result['extracted_data'])
+
+            if result.get('confidence'):
+                st.markdown("#### 📊 Quality Assessment")
+                confidence = result['confidence']
+                if confidence >= 0.8:
+                    st.success(f"🎉 High Quality: {confidence:.1%}")
+                elif confidence >= 0.6:
+                    st.warning(f"⚠️ Medium Quality: {confidence:.1%}")
+                else:
+                    st.error(f"❌ Low Quality: {confidence:.1%}")
+
+
+def display_emirates_preview(data: dict):
+    """Display Emirates ID preview data"""
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if 'emirates_id' in data:
+            st.info(f"🆔 **ID Number:** {data['emirates_id']}")
+        if 'name' in data:
+            st.info(f"👤 **Name:** {data['name']}")
+
+    with col2:
+        if 'date_of_birth' in data:
+            st.info(f"📅 **DOB:** {data['date_of_birth']}")
+        if 'nationality' in data:
+            st.info(f"🌍 **Nationality:** {data['nationality']}")
+
+
+def display_bank_preview(data: dict):
+    """Display Bank Statement preview data"""
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if 'account_number' in data:
+            st.info(f"🏦 **Account:** {data['account_number']}")
+        if 'balance' in data:
+            st.metric("💰 Balance", f"AED {data['balance']}")
+
+    with col2:
+        if 'monthly_income' in data:
+            st.metric("📈 Income", f"AED {data['monthly_income']}")
+        if 'bank_name' in data:
+            st.info(f"🏛️ **Bank:** {data['bank_name']}")

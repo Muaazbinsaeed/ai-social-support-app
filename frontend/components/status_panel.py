@@ -67,7 +67,7 @@ def show_application_status():
     # Manual refresh button
     col1, col2, col3 = st.columns([2, 1, 1])
     with col1:
-        if st.button("🔄 Refresh Status", use_container_width=True, key="refresh_status_panel"):
+        if st.button("🔄 Refresh Status", width='stretch', key="refresh_status_panel"):
             refresh_status_data(current_app_id)
 
     with col2:
@@ -360,11 +360,11 @@ def show_error_recovery():
     col1, col2 = st.columns(2)
 
     with col1:
-        if st.button("🔄 Retry Processing", use_container_width=True, key="retry_processing_btn"):
+        if st.button("🔄 Retry Processing", width='stretch', key="retry_processing_btn"):
             retry_processing()
 
     with col2:
-        if st.button("📞 Contact Support", use_container_width=True, key="contact_support_btn"):
+        if st.button("📞 Contact Support", width='stretch', key="contact_support_btn"):
             show_contact_support()
 
 

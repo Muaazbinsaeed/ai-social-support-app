@@ -49,7 +49,7 @@ def show_login_form():
             )
 
         # Submit button
-        submitted = st.form_submit_button("🚀 Login", use_container_width=True)
+        submitted = st.form_submit_button("🚀 Login", width='stretch')
 
         if submitted:
             if not username or not password:
@@ -61,7 +61,7 @@ def show_login_form():
     st.markdown("---")
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        if st.button("📝 Need an account? Register here", use_container_width=True):
+        if st.button("📝 Need an account? Register here", width='stretch'):
             st.session_state.show_register = True
             st.rerun()
 
@@ -105,7 +105,7 @@ def show_register_form():
             )
 
         # Submit button
-        submitted = st.form_submit_button("🎉 Create Account", use_container_width=True)
+        submitted = st.form_submit_button("🎉 Create Account", width='stretch')
 
         if submitted:
             if validate_registration_form(username, email, password):
@@ -115,7 +115,7 @@ def show_register_form():
     st.markdown("---")
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        if st.button("🔐 Already have an account? Login here", use_container_width=True):
+        if st.button("🔐 Already have an account? Login here", width='stretch'):
             st.session_state.show_register = False
             st.rerun()
 
@@ -252,10 +252,20 @@ def show_user_header():
 
 def logout_user():
     """Logout current user"""
+    # Call the API logout endpoint first
+    api_result = api_client.logout()
+
+    # Clear authentication state
     clear_authentication()
 
     # Clear authentication cookies
     clear_auth_cookies()
 
-    set_success_message("You have been logged out successfully.")
+    # Check if API call was successful for better user feedback
+    if 'error' not in api_result:
+        set_success_message("You have been logged out successfully.")
+    else:
+        # Still show success since we cleared local state regardless
+        set_success_message("You have been logged out locally.")
+
     st.rerun()

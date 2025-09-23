@@ -274,22 +274,22 @@ def show_result_actions():
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        if st.button("📋 Download Certificate", use_container_width=True):
+        if st.button("📋 Download Certificate", width='stretch'):
             download_certificate()
 
     with col2:
-        if st.button("🖨️ Print Results", use_container_width=True):
+        if st.button("🖨️ Print Results", width='stretch'):
             print_results()
 
     with col3:
-        if st.button("💬 Chat Support", use_container_width=True):
+        if st.button("💬 Chat Support", width='stretch'):
             show_chat_support()
 
     # New application button
     st.markdown("---")
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        if st.button("🆕 Start New Application", use_container_width=True, type="primary", key="results_start_new_app"):
+        if st.button("🆕 Start New Application", width='stretch', type="primary", key="results_start_new_app"):
             start_new_application()
 
 

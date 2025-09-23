@@ -106,10 +106,10 @@ def show_manual_loading_option():
     col1, col2 = st.columns([1, 1])
 
     with col1:
-        load_btn = st.button("📋 Load My Application", use_container_width=True, type="primary", disabled=not app_id_input.strip())
+        load_btn = st.button("📋 Load My Application", width='stretch', type="primary", disabled=not app_id_input.strip())
 
     with col2:
-        auto_search_btn = st.button("🔍 Auto Search", use_container_width=True, help="Try to automatically find your applications")
+        auto_search_btn = st.button("🔍 Auto Search", width='stretch', help="Try to automatically find your applications")
 
     if load_btn and app_id_input.strip():
         # Validate application ID format (basic UUID format check)
@@ -304,7 +304,7 @@ def show_editable_form(is_existing: bool, application_id: str = None):
             save_draft = st.form_submit_button(
                 "💾 Save Draft",
                 help="Save your progress",
-                use_container_width=True
+                width='stretch'
             )
 
         with col2:
@@ -312,14 +312,14 @@ def show_editable_form(is_existing: bool, application_id: str = None):
                 submit_form = st.form_submit_button(
                     "🔄 Update Application",
                     help="Update your application",
-                    use_container_width=True,
+                    width='stretch',
                     type="primary"
                 )
             else:
                 submit_form = st.form_submit_button(
                     "🚀 Submit Application",
                     help="Submit your application for processing",
-                    use_container_width=True,
+                    width='stretch',
                     type="primary"
                 )
 
@@ -364,7 +364,7 @@ def show_new_application_actions():
     
     with col1:
         # Clear form button for new applications
-        if st.button("🔄 Clear Form", use_container_width=True, key="clear_form_btn", help="Clear all form fields"):
+        if st.button("🔄 Clear Form", width='stretch', key="clear_form_btn", help="Clear all form fields"):
             # Clear form data
             st.session_state.application_form_data = {}
             # Clear widget states
@@ -377,7 +377,7 @@ def show_new_application_actions():
     
     with col2:
         # Load existing application if user has one
-        if st.button("🔍 Find My Application", use_container_width=True, key="find_app_btn", help="Search for existing application"):
+        if st.button("🔍 Find My Application", width='stretch', key="find_app_btn", help="Search for existing application"):
             with st.spinner("Searching for your application..."):
                 from frontend.utils.api_client import api_client
                 apps_result = api_client.get_user_applications()
@@ -405,19 +405,19 @@ def show_application_actions(application_id: str, current_state: str):
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        refresh_btn = st.button("🔄 Refresh", use_container_width=True, key="refresh_btn", help="Refresh application data")
+        refresh_btn = st.button("🔄 Refresh", width='stretch', key="refresh_btn", help="Refresh application data")
 
     with col2:
         # Show reset button for stuck applications OR to clear and start over
         if current_state in ['scanning_documents', 'ocr_completed', 'analyzing_income', 'analyzing_identity', 'making_decision', 'analysis_completed']:
-            reset_btn = st.button("🔧 Reset to Edit", use_container_width=True, key="reset_btn", help="Reset application to editable state")
+            reset_btn = st.button("🔧 Reset to Edit", width='stretch', key="reset_btn", help="Reset application to editable state")
         else:
-            reset_btn = st.button("🆕 Start Over", use_container_width=True, key="start_over_btn", help="Clear application and start fresh")
+            reset_btn = st.button("🆕 Start Over", width='stretch', key="start_over_btn", help="Clear application and start fresh")
 
     with col3:
         # Delete application option for draft states
         if current_state in ['draft', 'form_submitted', 'documents_uploaded']:
-            delete_app = st.button("🗑️ Delete", use_container_width=True, type="secondary", key="delete_btn", help="Delete this application")
+            delete_app = st.button("🗑️ Delete", width='stretch', type="secondary", key="delete_btn", help="Delete this application")
         else:
             delete_app = False
 

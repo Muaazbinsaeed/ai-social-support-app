@@ -95,7 +95,7 @@ def show_current_application_section():
             st.info(f"Status: {status.replace('_', ' ').title()} | Progress: {progress}%")
 
         # New Application button
-        if st.button("🆕 Start New Application", type="primary", use_container_width=True, key="nav_start_new_app"):
+        if st.button("🆕 Start New Application", type="primary", width='stretch', key="nav_start_new_app"):
             # Discard current application and reset state
             discard_result = api_client.discard_current_application()
             if 'error' in discard_result:
@@ -106,7 +106,7 @@ def show_current_application_section():
                 st.rerun()
     else:
         st.info("No active application")
-        if st.button("🆕 Create New Application", type="primary", use_container_width=True, key="nav_create_new_app"):
+        if st.button("🆕 Create New Application", type="primary", width='stretch', key="nav_create_new_app"):
             reset_application_state()
             st.success("Ready to create your application!")
             st.rerun()
@@ -199,14 +199,14 @@ def show_application_card(app, is_active=False):
         with col2:
             # Action buttons
             if is_active:
-                if st.button("📖 Load Application", key=f"load_{app_id}", use_container_width=True):
+                if st.button("📖 Load Application", key=f"load_{app_id}", width='stretch'):
                     if load_existing_application(app_id, api_client):
                         st.success("Application loaded successfully!")
                         st.rerun()
                     else:
                         st.error("Failed to load application")
             else:
-                if st.button("👁️ View Details", key=f"view_{app_id}", use_container_width=True):
+                if st.button("👁️ View Details", key=f"view_{app_id}", width='stretch'):
                     # Load historical application for viewing
                     if load_existing_application(app_id, api_client):
                         st.success("Historical application loaded for viewing")
@@ -215,7 +215,7 @@ def show_application_card(app, is_active=False):
                         st.error("Failed to load application details")
 
             # Copy application ID
-            if st.button("📋 Copy ID", key=f"copy_{app_id}", use_container_width=True):
+            if st.button("📋 Copy ID", key=f"copy_{app_id}", width='stretch'):
                 st.code(app_id, language=None)
                 st.success("Application ID displayed above!")
 

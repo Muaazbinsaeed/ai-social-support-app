@@ -112,7 +112,9 @@ class AuthCookieManager:
         try:
             if COOKIE_KEY in self.cookies:
                 del self.cookies[COOKIE_KEY]
-                self.cookies.save()
+            if "session_data" in self.cookies:
+                del self.cookies["session_data"]
+            self.cookies.save()
         except Exception:
             pass
 

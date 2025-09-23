@@ -148,11 +148,13 @@ def update_password(
              summary="User logout", description="Logout current user (client should discard the JWT token)")
 def logout_user(current_user: User = Depends(get_current_active_user)):
     """Logout user (client should discard token)"""
+    from datetime import datetime
+
     logger.info("User logout", user_id=str(current_user.id))
     return {
         "message": "Successfully logged out",
         "user_id": str(current_user.id),
-        "logged_out_at": "2025-09-19T20:30:00Z"
+        "logged_out_at": datetime.now().isoformat() + "Z"
     }
 
 

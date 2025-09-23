@@ -24,6 +24,7 @@ from frontend.components.document_management import show_enhanced_document_panel
 from frontend.components.processing_status import show_processing_status
 from frontend.components.status_panel import show_status_panel
 from frontend.components.results_panel import show_results_panel
+from frontend.components.ocr_display import show_enhanced_ocr_display
 
 
 def configure_page():
@@ -223,12 +224,15 @@ def show_dashboard():
         # Right Panel: Processing Status with OCR Results
         with st.container():
             # Add tabs for different views
-            tab1, tab2 = st.tabs(["📊 Processing Status", "📈 Summary"])
-            
+            tab1, tab2, tab3 = st.tabs(["📊 Processing Status", "🔍 Enhanced OCR", "📈 Summary"])
+
             with tab1:
                 show_processing_status()
-            
+
             with tab2:
+                show_enhanced_ocr_display()
+
+            with tab3:
                 show_status_panel()
 
     # Show footer

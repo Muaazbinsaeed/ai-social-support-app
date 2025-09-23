@@ -35,6 +35,11 @@ class DocumentProcessingError(ApplicationException):
     pass
 
 
+class DataProcessingError(ApplicationException):
+    """Raised when data processing fails"""
+    pass
+
+
 class AIServiceError(ApplicationException):
     """Raised when AI service calls fail"""
     pass

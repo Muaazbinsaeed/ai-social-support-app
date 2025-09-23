@@ -154,13 +154,13 @@ def show_upload_actions():
     with col1:
         # Start processing button
         if uploaded_count > 0:
-            if st.button("🚀 Start Processing", use_container_width=True, type="primary"):
+            if st.button("🚀 Start Processing", width='stretch', type="primary"):
                 start_document_processing()
 
     with col2:
         # Clear all button
         if uploaded_count > 0:
-            if st.button("🗑️ Clear All", use_container_width=True):
+            if st.button("🗑️ Clear All", width='stretch'):
                 clear_all_documents()
 
 

@@ -68,11 +68,27 @@ def clear_authentication():
     st.session_state.uploaded_documents = {}
     st.session_state.processing_status = None
     st.session_state.application_results = None
-    
+
     # Clear document state
-    st.session_state.document_state = {}
-    st.session_state.document_metadata = {}
-    st.session_state.documents_loaded = False
+    if 'document_state' in st.session_state:
+        st.session_state.document_state = {}
+    if 'document_metadata' in st.session_state:
+        st.session_state.document_metadata = {}
+    if 'documents_loaded' in st.session_state:
+        st.session_state.documents_loaded = False
+
+    # Clear any cached data
+    if 'needs_application_loading' in st.session_state:
+        del st.session_state.needs_application_loading
+
+    # Clear form widget states
+    form_keys_to_clear = [
+        'full_name_new_form', 'emirates_id_new_form', 'phone_new_form', 'email_new_form',
+        'full_name_edit_form', 'emirates_id_edit_form', 'phone_edit_form', 'email_edit_form'
+    ]
+    for key in form_keys_to_clear:
+        if key in st.session_state:
+            del st.session_state[key]
 
 
 def set_current_application(application_id: str):
